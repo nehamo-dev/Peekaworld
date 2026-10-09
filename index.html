@@ -1,0 +1,1127 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Peekaworld</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400..800&family=Fraunces:ital,opsz,wght,SOFT@0,9..144,400..700,100;1,9..144,400..700,100&display=swap">
+<style>
+/* Layout: full-bleed pastel atlas in a misty frame; soft frosted panels float in the corners.
+   One light look on purpose (a picture-book map), so no dark-mode variant. */
+:root{
+  color-scheme: light;
+  --mist:#e9f1f5;
+  --ocean:#c6e3f2;
+  --ocean-ink:#5d8fae;
+  --ink:#36405a;
+  --muted:#7d869c;
+  --paper:#ffffff;
+  --butter:#fbe7a6;
+  --rose:#f5c6d6;
+  --rose-ink:#c9607f;
+  --mint:#c5e8c8;
+  --display:"Fraunces","Iowan Old Style","Palatino",Georgia,serif;
+  --body:"Figtree","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --shadow:0 14px 34px -14px rgba(54,64,90,.28),0 2px 6px rgba(54,64,90,.06);
+  --line:rgba(54,64,90,.08);
+  --gut:16px;
+}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0;overflow:hidden;background:var(--mist)}
+body{font-family:var(--body);color:var(--ink);-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;overscroll-behavior:none;-webkit-touch-callout:none;-webkit-font-smoothing:antialiased}
+#app{position:fixed;inset:0}
+#map{width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+#map:active{cursor:grabbing}
+button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
+button:focus-visible{outline:2px solid var(--rose-ink);outline-offset:3px}
+.disp{font-family:var(--display);font-variation-settings:"SOFT" 100,"opsz" 72}
+
+/* soft panels */
+.panel{background:rgba(255,255,255,.9);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow)}
+.btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;background:var(--paper);box-shadow:0 2px 8px -2px rgba(54,64,90,.14);padding:10px 18px;font-family:var(--body);font-weight:600;font-size:16px;cursor:pointer;min-height:46px;transition:transform .12s,box-shadow .12s,background .12s}
+.btn:hover{box-shadow:0 6px 16px -6px rgba(54,64,90,.25)}
+.btn:active{transform:scale(.97)}
+.btn.butter{background:var(--butter);border-color:transparent}
+.btn.rose{background:var(--rose);border-color:transparent}
+.btn svg{width:20px;height:20px;flex:none}
+
+/* top bar */
+.top{position:absolute;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top,0px) + 14px) var(--gut) 0;display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;pointer-events:none}
+.top>*{pointer-events:auto}
+.brand{display:flex;align-items:center;gap:12px;padding:9px 20px 9px 10px;border-radius:999px}
+.brand svg{width:36px;height:36px;flex:none}
+.brand h1{margin:0;font-family:var(--display);font-variation-settings:"SOFT" 100,"opsz" 72;font-weight:600;font-size:25px;line-height:1;letter-spacing:-.01em}
+.brand h1 em{color:var(--rose-ink);font-weight:500}
+.right{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+.layers{display:flex;gap:4px;flex-wrap:wrap;padding:5px;border-radius:999px}
+.chip{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:999px;padding:7px 14px 7px 9px;background:transparent;font-weight:600;font-size:14.5px;color:var(--muted);cursor:pointer;min-height:40px;transition:background .18s,color .18s}
+.chip[aria-pressed="true"]{background:var(--chipbg);color:var(--ink)}
+.chip i{width:14px;height:14px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--dot);display:block;flex:none;transition:background .18s}
+.chip[aria-pressed="true"] i{background:var(--dot)}
+
+/* zoom controls */
+.zoom{position:absolute;right:var(--gut);top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:10px}
+.zoom button{width:52px;height:52px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.92);box-shadow:var(--shadow);cursor:pointer;display:grid;place-items:center;padding:0;transition:transform .12s}
+.zoom button:active{transform:scale(.94)}
+.zoom svg{width:22px;height:22px}
+.zoom #zback{background:var(--butter)}
+
+/* info card */
+.card{position:absolute;left:var(--gut);bottom:calc(env(safe-area-inset-bottom,0px) + var(--gut));width:min(420px,calc(100% - 2*var(--gut) - 68px));padding:20px 22px 18px;border-radius:26px;animation:rise .32s cubic-bezier(.2,.9,.3,1.15)}
+@keyframes rise{from{transform:translateY(18px);opacity:0}to{transform:none;opacity:1}}
+.card .x{position:absolute;top:14px;right:14px;width:36px;height:36px;border-radius:50%;border:0;background:#f1f3f7;cursor:pointer;display:grid;place-items:center;padding:0}
+.card .x svg{width:14px;height:14px}
+.card-top{display:flex;gap:16px;align-items:center;padding-right:40px}
+.flag{font-size:46px;line-height:1;flex:none;width:72px;height:72px;display:grid;place-items:center;border-radius:20px;background:var(--flagbg,#eef4f8)}
+.flag svg{width:38px;height:38px}
+.kind{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.card h2{margin:3px 0 0;font-family:var(--display);font-variation-settings:"SOFT" 100,"opsz" 72;font-weight:600;font-size:32px;line-height:1.05;letter-spacing:-.015em;text-wrap:balance}
+.rows{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:16px 0 0;font-size:16px}
+.rows dt{color:var(--muted);font-weight:500}
+.rows dd{margin:0;font-weight:650;min-width:0}
+.fact{margin:14px 0 0;padding:13px 16px;border-radius:16px;background:#fdf6e2;font-size:16.5px;line-height:1.45;font-weight:500}
+.fact b{display:block;font-family:var(--display);font-variation-settings:"SOFT" 100,"opsz" 24;font-style:italic;font-weight:500;font-size:15px;color:#a8853a;margin-bottom:3px}
+.card-actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.card .found{font-family:var(--display);font-variation-settings:"SOFT" 100;font-style:italic;font-weight:600;color:#4f9a6b;font-size:19px;margin:0 0 10px}
+
+/* game banner */
+.game{position:absolute;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 92px);width:min(540px,calc(100% - 2*var(--gut) - 68px));padding:14px 18px 16px;text-align:center;border-radius:26px}
+.modes{display:inline-flex;gap:2px;padding:3px;border-radius:999px;background:#eef2f6}
+.modes button{border:0;background:transparent;border-radius:999px;padding:6px 14px;font-weight:600;font-size:14px;color:var(--muted);cursor:pointer;min-height:34px;transition:background .15s,color .15s}
+.modes button[aria-pressed="true"]{background:var(--paper);color:var(--ink);box-shadow:0 1px 4px rgba(54,64,90,.15)}
+.ask{font-family:var(--display);font-variation-settings:"SOFT" 100,"opsz" 72;font-weight:600;font-size:30px;letter-spacing:-.01em;margin:12px 0;line-height:1.15;text-wrap:balance}
+.ask .gflag{font-size:30px;vertical-align:-3px;margin-right:8px}
+.ask b{font-weight:600;font-style:italic;color:var(--rose-ink)}
+.gbar{display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap}
+.stars{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:18px;padding:0 16px;min-height:46px;border-radius:999px;background:var(--butter);font-variant-numeric:tabular-nums}
+.stars svg{width:18px;height:18px}
+.shake{animation:shake .4s}
+@keyframes shake{20%,60%{transform:translateX(calc(-50% - 8px))}40%,80%{transform:translateX(calc(-50% + 8px))}}
+
+.toast{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 28px);transform:translateX(-50%);padding:13px 24px;border-radius:999px;font-family:var(--display);font-variation-settings:"SOFT" 100;font-weight:600;font-size:20px;white-space:nowrap;max-width:calc(100% - 2*var(--gut));overflow:hidden;text-overflow:ellipsis;animation:rise .25s ease-out}
+.loading{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-style:italic;font-size:24px;color:var(--ocean-ink)}
+
+/* map styles */
+.country{stroke:#fff;stroke-width:1;stroke-opacity:.95;vector-effect:non-scaling-stroke;cursor:pointer;transition:filter .2s}
+.state{stroke:#fff;stroke-width:1;stroke-opacity:.95;vector-effect:non-scaling-stroke;cursor:pointer}
+.country.sel,.state.sel{stroke:var(--ink);stroke-width:2;stroke-opacity:.85;filter:saturate(1.5) brightness(1.02)}
+.hint{animation:hint .7s ease-in-out 5}
+@keyframes hint{50%{fill:#ffd86b;stroke:var(--ink);stroke-width:2.5}}
+.ocean{fill:var(--ocean);cursor:pointer}
+.grat{fill:none;stroke:#fff;stroke-opacity:.45;stroke-width:.6;vector-effect:non-scaling-stroke;pointer-events:none}
+.sphere-edge{fill:none;stroke:#fff;stroke-width:3;stroke-opacity:.8;vector-effect:non-scaling-stroke;pointer-events:none}
+.lbl text{font-family:var(--body);font-weight:600;fill:var(--ink);paint-order:stroke;stroke:rgba(255,255,255,.85);stroke-width:3px;stroke-linejoin:round;pointer-events:none}
+.lbl.ocean-l text{font-family:var(--display);font-variation-settings:"SOFT" 100,"opsz" 36;font-style:italic;font-weight:500;fill:var(--ocean-ink);stroke:rgba(255,255,255,.55);letter-spacing:.06em}
+.lbl.sea-l text{font-family:var(--display);font-variation-settings:"SOFT" 100,"opsz" 18;font-style:italic;font-weight:500;fill:var(--ocean-ink);stroke:rgba(255,255,255,.5)}
+.lbl.cont-l text{font-weight:700;letter-spacing:.24em;text-transform:uppercase;fill:#4c5671;stroke:rgba(255,255,255,.7);stroke-width:4px}
+.lbl.state-l text{fill:#4a6b56;font-weight:600}
+.tap{cursor:pointer}
+.tap text{pointer-events:auto}
+.city circle{fill:#fff;stroke:var(--ink);stroke-width:1.6}
+.city path{fill:#f2a3ba;stroke:#fff;stroke-width:1.5;stroke-linejoin:round}
+.city text{font-weight:600}
+.ripple{fill:none;stroke:#fff;stroke-width:3;pointer-events:none}
+.hint-ring{fill:none;stroke:#ffd86b;stroke-width:5;pointer-events:none}
+
+.tip{position:absolute;pointer-events:none;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,.95);box-shadow:var(--shadow);color:var(--ink);font-weight:600;font-size:15px;white-space:nowrap;transform:translate(-50%,-150%)}
+@media (hover:hover){.country:hover,.state:hover{filter:saturate(1.35) brightness(1.02)}}
+#confetti{position:absolute;inset:0;pointer-events:none;width:100%;height:100%}
+
+@media (max-width:700px){
+  .brand h1{font-size:21px}
+  .chip{font-size:13px;padding:6px 11px 6px 8px}
+  .ask{font-size:24px}
+  .card h2{font-size:26px}
+  .flag{font-size:38px;width:60px;height:60px}
+}
+@media (prefers-reduced-motion:reduce){
+  .card,.toast{animation:none}
+  .hint{animation-iteration-count:2}
+}
+</style>
+
+<div id="app">
+  <svg id="map" role="img" aria-label="Interactive world map"></svg>
+  <canvas id="confetti"></canvas>
+  <div class="loading" id="loading">Unrolling the map…</div>
+
+  <div class="top">
+    <div class="brand panel">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="#c6e3f2"/><path d="M8 15c4-3 7 0 9-2s5-3 7 0-1 6 2 8 6 1 5 5-5 6-8 5-3-4-6-4-6 3-8 0-1-6-1-8 0-3 0-4z" fill="#c5e8c8"/><path d="M27 9c2 0 4 1 4 3s-2 2-3 1-2-4-1-4z" fill="#fbdcae"/><circle cx="30" cy="27" r="2.5" fill="#f5c6d6"/></svg>
+      <h1>Peeka<em>world</em></h1>
+    </div>
+    <div class="right">
+      <div class="layers panel" role="group" aria-label="Map layers">
+        <button class="chip" id="l-oceans" aria-pressed="true" style="--dot:#8cc3e2;--chipbg:#e3f1f9"><i></i>Oceans</button>
+        <button class="chip" id="l-continents" aria-pressed="true" style="--dot:#f2c27e;--chipbg:#fdf0dc"><i></i>Continents</button>
+        <button class="chip" id="l-countries" aria-pressed="true" style="--dot:#b9a8e6;--chipbg:#efeafb"><i></i>Countries</button>
+        <button class="chip" id="l-states" aria-pressed="true" style="--dot:#93d09b;--chipbg:#e6f5e8"><i></i>US States</button>
+        <button class="chip" id="l-cities" aria-pressed="true" style="--dot:#ebc34f;--chipbg:#fdf4d6"><i></i>Cities</button>
+        <button class="chip" id="l-sound" aria-pressed="true" style="--dot:#ea9ab1;--chipbg:#fce6ed"><i></i>Talking</button>
+      </div>
+      <button class="btn butter" id="playBtn">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.6 6.1.6-4.6 4.1 1.3 6L12 16.3l-5.4 3 1.3-6-4.6-4.1 6.1-.6z" fill="#fff" stroke="#36405a" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        Find It!
+      </button>
+    </div>
+  </div>
+
+  <div class="zoom">
+    <button id="zback" aria-label="Go back" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5.5L4 12l6 6.5M4.8 12H20" fill="none" stroke="#36405a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button id="zin" aria-label="Zoom in"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="#36405a" stroke-width="2" stroke-linecap="round"/></svg></button>
+    <button id="zout" aria-label="Zoom out"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" stroke="#36405a" stroke-width="2" stroke-linecap="round"/></svg></button>
+    <button id="zhome" aria-label="Show whole world"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="#36405a" stroke-width="1.8"/><path d="M3.5 12h17M12 3.5c3 3 3 14 0 17M12 3.5c-3 3-3 14 0 17" fill="none" stroke="#36405a" stroke-width="1.6"/></svg></button>
+  </div>
+
+  <div class="game panel" id="game" hidden>
+    <div class="modes" role="group" aria-label="Game level">
+      <button data-mode="easy" aria-pressed="true">Easy</button>
+      <button data-mode="hard" aria-pressed="false">All countries</button>
+      <button data-mode="states" aria-pressed="false">US States</button>
+    </div>
+    <div class="ask" id="ask"></div>
+    <div class="gbar">
+      <span class="stars" aria-label="Stars"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.6 6.1.6-4.6 4.1 1.3 6L12 16.3l-5.4 3 1.3-6-4.6-4.1 6.1-.6z" fill="#fff" stroke="#36405a" stroke-width="1.6" stroke-linejoin="round"/></svg><span id="gStars">0</span></span>
+      <button class="btn" id="gHint">Hint</button>
+      <button class="btn" id="gSkip">Skip</button>
+      <button class="btn rose" id="gStop">Done</button>
+    </div>
+  </div>
+
+  <div class="card panel" id="card" hidden>
+    <button class="x" id="cClose" aria-label="Close"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12" stroke="#36405a" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+    <p class="found" id="cFound" hidden></p>
+    <div class="card-top">
+      <div class="flag" id="cFlag"></div>
+      <div style="min-width:0">
+        <span class="kind" id="cKind"></span>
+        <h2 id="cName"></h2>
+      </div>
+    </div>
+    <dl class="rows" id="cRows"></dl>
+    <p class="fact" id="cFact"><b>Did you know?</b><span></span></p>
+    <div class="card-actions">
+      <button class="btn butter" id="cSay"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4z" fill="#fff" stroke="#36405a" stroke-width="1.6" stroke-linejoin="round"/><path d="M15.5 9c1.3 1.8 1.3 4.2 0 6M18 6.5c2.7 3.2 2.7 7.8 0 11" fill="none" stroke="#36405a" stroke-width="1.6" stroke-linecap="round"/></svg>Say it</button>
+      <button class="btn" id="cZoom"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="#36405a" stroke-width="1.8"/><path d="M15 15l5 5M8 10.5h5M10.5 8v5" stroke="#36405a" stroke-width="1.8" stroke-linecap="round"/></svg>Zoom in</button>
+    </div>
+  </div>
+  <div class="toast panel" id="toast" hidden></div>
+  <div class="tip" id="tip" hidden></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script>
+/* ---------------- DATA ---------------- */
+const CONT = {
+  NA:{name:'North America',color:'#c5e8c8',pos:[-102,47],fact:'Home to Canada, the United States, Mexico and lots of island countries in the Caribbean Sea.'},
+  SA:{name:'South America',color:'#f9cdbb',pos:[-60,-14],fact:'The Andes here are the longest mountain range on land, and the Amazon River carries more water than any other river.'},
+  EU:{name:'Europe',color:'#d8cdf2',pos:[22,55],fact:'Lots of countries are packed close together here. You can drive through five countries in one day!'},
+  AF:{name:'Africa',color:'#fbdcae',pos:[20,6],fact:'Africa has 54 countries and the Sahara, the biggest hot desert in the world.'},
+  AS:{name:'Asia',color:'#f6e9a3',pos:[92,46],fact:'The biggest continent. More than half of all the people on Earth live in Asia.'},
+  OC:{name:'Australia',color:'#f5c6d6',pos:[134,-24],fact:'Australia is a continent and a country at the same time. Kangaroos and koalas live here.'},
+  AN:{name:'Antarctica',color:'#fbfdff',pos:[30,-80],fact:'The coldest, windiest place on Earth. No country owns it, and only scientists live there for a while.'}
+};
+
+const OCEANS = {
+  pacific:{name:'Pacific Ocean',big:true,pos:[[-150,2],[168,8]],fact:'The biggest and deepest ocean. It is bigger than all the land on Earth put together!'},
+  atlantic:{name:'Atlantic Ocean',big:true,pos:[[-40,26],[-18,-22]],fact:'It gets a little wider every year, about as fast as your fingernails grow.'},
+  indian:{name:'Indian Ocean',big:true,pos:[[74,-24]],fact:'The warmest ocean on Earth. Its water can feel like a bath in some places.'},
+  arctic:{name:'Arctic Ocean',big:true,pos:[[60,84]],fact:'The smallest and coldest ocean. Polar bears hunt on its floating sea ice.'},
+  southern:{name:'Southern Ocean',big:true,pos:[[100,-61]],fact:'It swirls all the way around Antarctica. Penguins and whales love it here.'},
+  med:{name:'Mediterranean Sea',pos:[[18,34.5]],fact:'Its name means "in the middle of the land", because land surrounds it.'},
+  carib:{name:'Caribbean Sea',pos:[[-75,15]],fact:'Warm turquoise water full of coral reefs and sea turtles.'},
+  gulf:{name:'Gulf of Mexico',pos:[[-90,25]],fact:'Dolphins and gentle manatees swim in its warm water.'},
+  black:{name:'Black Sea',pos:[[34,43.3]],fact:'Deep down the water has almost no oxygen, so very old shipwrecks stay almost perfect.'},
+  caspian:{name:'Caspian Sea',pos:[[50.5,41.5]],fact:'It is called a sea, but it is really the biggest lake in the world!'},
+  red:{name:'Red Sea',pos:[[38.5,20]],fact:'One of the saltiest seas, with amazing coral reefs and colorful fish.'},
+  hudson:{name:'Hudson Bay',pos:[[-85,59]],fact:'Polar bears wait on its shores every fall for the water to freeze.'}
+};
+
+// id | ISO-2 | continent | capital | fun fact
+const INFO_RAW = `716|ZW|AF|Harare|Victoria Falls, one of the biggest waterfalls in the world, is on its border.
+894|ZM|AF|Lusaka|
+887|YE|AS|Sana'a|
+704|VN|AS|Hanoi|Ha Long Bay has around 1,600 limestone islands poking out of the sea.
+862|VE|SA|Caracas|Angel Falls is the tallest waterfall in the world.
+336|VA|EU|Vatican City|The smallest country in the world. It is inside the city of Rome!
+548|VU|OC|Port Vila|
+860|UZ|AS|Tashkent|
+858|UY|SA|Montevideo|
+583|FM|OC|Palikir|
+584|MH|OC|Majuro|
+580|MP|OC||
+850|VI|NA||
+316|GU|OC||
+016|AS|OC||
+630|PR|NA|San Juan|
+840|US|NA|Washington, D.C.|It has 50 states. Alaska is the biggest and Rhode Island is the smallest.
+239|GS|SA||
+086|IO|AS||
+654|SH|AF||
+612|PN|OC||
+660|AI|NA||
+238|FK|SA||
+136|KY|NA||
+060|BM|NA||
+092|VG|NA||
+796|TC|NA||
+500|MS|NA||
+832|JE|EU||
+831|GG|EU||
+833|IM|EU||
+826|GB|EU|London|It is made of four countries: England, Scotland, Wales and Northern Ireland.
+784|AE|AS|Abu Dhabi|The Burj Khalifa in Dubai is the tallest building in the world.
+804|UA|EU|Kyiv|
+800|UG|AF|Kampala|Mountain gorillas live in its misty forests.
+795|TM|AS|Ashgabat|
+792|TR|AS|Ankara|The city of Istanbul sits on two continents, Europe and Asia.
+788|TN|AF|Tunis|
+780|TT|NA|Port of Spain|
+776|TO|OC|Nuku'alofa|
+768|TG|AF|Lomé|
+626|TL|AS|Dili|
+764|TH|AS|Bangkok|The elephant is its national animal.
+834|TZ|AF|Dodoma|Mount Kilimanjaro, the tallest mountain in Africa, is here.
+762|TJ|AS|Dushanbe|
+158|TW|AS|Taipei|
+760|SY|AS|Damascus|
+756|CH|EU|Bern|Famous for chocolate, cheese and the snowy Alps mountains.
+752|SE|EU|Stockholm|It has a hotel made of ice that is built again every winter.
+748|SZ|AF|Mbabane|
+740|SR|SA|Paramaribo|
+728|SS|AF|Juba|The newest country in Africa. It was born in 2011.
+729|SD|AF|Khartoum|It has more pyramids than Egypt!
+144|LK|AS|Sri Jayawardenepura Kotte|
+724|ES|EU|Madrid|In the town of Buñol, people throw tomatoes at each other in a festival called La Tomatina.
+410|KR|AS|Seoul|Kimchi, a spicy pickled cabbage, is eaten with almost every meal.
+710|ZA|AF|Pretoria|It has three capital cities: Pretoria, Cape Town and Bloemfontein!
+706|SO|AF|Mogadishu|
+090|SB|OC|Honiara|
+703|SK|EU|Bratislava|
+705|SI|EU|Ljubljana|
+702|SG|AS|Singapore|A country that is also one city. It has giant tree sculptures that light up at night.
+694|SL|AF|Freetown|
+690|SC|AF|Victoria|
+688|RS|EU|Belgrade|
+686|SN|AF|Dakar|
+682|SA|AS|Riyadh|It has one of the biggest sand deserts in the world, called the Empty Quarter.
+678|ST|AF|São Tomé|
+674|SM|EU|San Marino|
+882|WS|OC|Apia|
+670|VC|NA|Kingstown|
+662|LC|NA|Castries|
+659|KN|NA|Basseterre|
+646|RW|AF|Kigali|
+643|RU|AS|Moscow|The biggest country in the world. It has 11 time zones!
+642|RO|EU|Bucharest|
+634|QA|AS|Doha|
+620|PT|EU|Lisbon|
+616|PL|EU|Warsaw|The famous scientist Marie Curie was born in Warsaw.
+608|PH|AS|Manila|It is made of more than 7,000 islands.
+604|PE|SA|Lima|Machu Picchu, an ancient Inca city, sits high up in its mountains.
+600|PY|SA|Asunción|
+598|PG|OC|Port Moresby|People here speak more than 800 different languages!
+591|PA|NA|Panama City|The Panama Canal lets ships cross from one ocean to another.
+585|PW|OC|Ngerulmud|
+586|PK|AS|Islamabad|K2, the second-tallest mountain on Earth, is on its border.
+512|OM|AS|Muscat|
+578|NO|EU|Oslo|In the far north the sun does not set for weeks in summer.
+408|KP|AS|Pyongyang|
+566|NG|AF|Abuja|More people live here than in any other country in Africa.
+562|NE|AF|Niamey|
+558|NI|NA|Managua|
+554|NZ|OC|Wellington|There are more sheep here than people!
+570|NU|OC||
+184|CK|OC||
+528|NL|EU|Amsterdam|There are more bikes here than people.
+533|AW|NA||
+531|CW|NA||
+524|NP|AS|Kathmandu|Mount Everest, the tallest mountain on Earth, is on its border.
+520|NR|OC|Yaren|
+516|NA|AF|Windhoek|
+508|MZ|AF|Maputo|
+504|MA|AF|Rabat|The oldest university that is still open is in the city of Fez.
+732|EH|AF||
+499|ME|EU|Podgorica|
+496|MN|AS|Ulaanbaatar|Many families live in round tents called gers and move with their animals.
+498|MD|EU|Chișinău|
+492|MC|EU|Monaco|
+484|MX|NA|Mexico City|Chocolate, corn and chili peppers first came from Mexico.
+480|MU|AF|Port Louis|The dodo bird used to live here.
+478|MR|AF|Nouakchott|
+470|MT|EU|Valletta|
+466|ML|AF|Bamako|
+462|MV|AS|Malé|The lowest country in the world. Most of it is barely above the sea.
+458|MY|AS|Kuala Lumpur|
+454|MW|AF|Lilongwe|
+450|MG|AF|Antananarivo|Lemurs live in the wild only on this island.
+807|MK|EU|Skopje|
+442|LU|EU|Luxembourg|
+440|LT|EU|Vilnius|
+438|LI|EU|Vaduz|
+434|LY|AF|Tripoli|
+430|LR|AF|Monrovia|
+426|LS|AF|Maseru|
+422|LB|AS|Beirut|
+428|LV|EU|Riga|
+418|LA|AS|Vientiane|
+417|KG|AS|Bishkek|
+414|KW|AS|Kuwait City|
+296|KI|OC|Tarawa|
+404|KE|AF|Nairobi|Famous for safaris where you can see lions, elephants and giraffes.
+398|KZ|AS|Astana|
+400|JO|AS|Amman|
+392|JP|AS|Tokyo|It is made of more than 14,000 islands.
+388|JM|NA|Kingston|Usain Bolt, the fastest runner ever, is from here.
+380|IT|EU|Rome|Pizza as we know it was invented in Naples.
+376|IL|AS||
+275|PS|AS||
+372|IE|EU|Dublin|It is called the Emerald Isle because it is so green.
+368|IQ|AS|Baghdad|
+364|IR|AS|Tehran|
+360|ID|AS|Jakarta|It has more than 17,000 islands and real-life Komodo dragons.
+356|IN|AS|New Delhi|The Taj Mahal is here, and so are Bengal tigers.
+352|IS|EU|Reykjavík|Volcanoes, geysers and glaciers all on one island.
+348|HU|EU|Budapest|
+340|HN|NA|Tegucigalpa|
+332|HT|NA|Port-au-Prince|
+328|GY|SA|Georgetown|
+624|GW|AF|Bissau|
+324|GN|AF|Conakry|
+320|GT|NA|Guatemala City|
+308|GD|NA|St. George's|
+300|GR|EU|Athens|The very first Olympic Games happened here, long ago.
+288|GH|AF|Accra|
+276|DE|EU|Berlin|There are more than 20,000 castles here.
+268|GE|AS|Tbilisi|
+270|GM|AF|Banjul|The smallest country on the African mainland.
+266|GA|AF|Libreville|
+250|FR|EU|Paris|The Eiffel Tower grows a little taller in summer because the heat makes the metal stretch.
+666|PM|NA||
+876|WF|OC||
+663|MF|NA||
+652|BL|NA||
+258|PF|OC||
+540|NC|OC||
+260|TF|AN||
+248|AX|EU||
+246|FI|EU|Helsinki|It has about 188,000 lakes.
+242|FJ|OC|Suva|
+231|ET|AF|Addis Ababa|People say coffee was first discovered here.
+233|EE|EU|Tallinn|
+232|ER|AF|Asmara|
+226|GQ|AF|Malabo|
+222|SV|NA|San Salvador|
+818|EG|AF|Cairo|The Great Pyramids are more than 4,500 years old.
+218|EC|SA|Quito|The Galápagos Islands, home of giant tortoises, belong to Ecuador.
+214|DO|NA|Santo Domingo|
+212|DM|NA|Roseau|
+262|DJ|AF|Djibouti|
+304|GL|NA|Nuuk|The biggest island in the world, and most of it is covered in ice.
+234|FO|EU||
+208|DK|EU|Copenhagen|LEGO bricks were invented here.
+203|CZ|EU|Prague|
+196|CY|EU|Nicosia|
+192|CU|NA|Havana|
+191|HR|EU|Zagreb|
+384|CI|AF|Yamoussoukro|
+188|CR|NA|San José|
+180|CD|AF|Kinshasa|The Congo River is the deepest river in the world.
+178|CG|AF|Brazzaville|
+174|KM|AF|Moroni|
+170|CO|SA|Bogotá|More kinds of birds live here than in any other country.
+156|CN|AS|Beijing|The Great Wall is thousands of kilometers long, and giant pandas live here.
+446|MO|AS||
+344|HK|AS||
+152|CL|SA|Santiago|Super long and skinny: about 4,300 km from top to bottom!
+148|TD|AF|N'Djamena|
+140|CF|AF|Bangui|
+132|CV|AF|Praia|
+124|CA|NA|Ottawa|It has more lakes than the rest of the world put together.
+120|CM|AF|Yaoundé|
+116|KH|AS|Phnom Penh|Angkor Wat is the biggest temple in the world.
+104|MM|AS|Naypyidaw|
+108|BI|AF|Gitega|
+854|BF|AF|Ouagadougou|
+100|BG|EU|Sofia|
+096|BN|AS|Bandar Seri Begawan|
+076|BR|SA|Brasília|Most of the Amazon, the biggest rainforest on Earth, is here.
+072|BW|AF|Gaborone|More elephants live here than anywhere else.
+070|BA|EU|Sarajevo|
+068|BO|SA|Sucre|It has the biggest salt flat in the world. After rain it turns into a giant mirror.
+064|BT|AS|Thimphu|
+204|BJ|AF|Porto-Novo|
+084|BZ|NA|Belmopan|
+056|BE|EU|Brussels|Famous for chocolate and waffles.
+112|BY|EU|Minsk|
+052|BB|NA|Bridgetown|
+050|BD|AS|Dhaka|
+048|BH|AS|Manama|
+044|BS|NA|Nassau|
+031|AZ|AS|Baku|
+040|AT|EU|Vienna|The composer Mozart was born here, in Salzburg.
+036|AU|OC|Canberra|Kangaroos and koalas live here and nowhere else in the wild.
+334|HM|AN||
+574|NF|OC||
+051|AM|AS|Yerevan|
+032|AR|SA|Buenos Aires|Aconcagua, the tallest mountain outside Asia, is here.
+028|AG|NA|St. John's|
+024|AO|AF|Luanda|
+020|AD|EU|Andorra la Vella|
+012|DZ|AF|Algiers|The biggest country in Africa.
+008|AL|EU|Tirana|
+004|AF|AS|Kabul|
+010|AQ|AN||Penguins live here, but no people live here for good.
+534|SX|NA||`;
+const INFO = {};
+INFO_RAW.split('\n').forEach(l => { const [id,a2,c,cap,fact] = l.split('|'); INFO[id] = {a2,c,cap,fact}; });
+const BY_NAME = {
+  'Somaliland':{a2:'',c:'AF',cap:'Hargeisa'}, 'Kosovo':{a2:'XK',c:'EU',cap:'Pristina'},
+  'N. Cyprus':{a2:'',c:'EU'}, 'Indian Ocean Ter.':{a2:'',c:'OC'}, 'Siachen Glacier':{a2:'',c:'AS'},
+  'Ashmore and Cartier Is.':{a2:'',c:'OC'}
+};
+const NAME_FIX = {
+  'United States of America':'United States','Dem. Rep. Congo':'DR Congo','Congo':'Republic of the Congo',
+  'Central African Rep.':'Central African Republic','Dominican Rep.':'Dominican Republic','Eq. Guinea':'Equatorial Guinea',
+  'S. Sudan':'South Sudan','Bosnia and Herz.':'Bosnia and Herzegovina','Macedonia':'North Macedonia','eSwatini':'Eswatini',
+  'W. Sahara':'Western Sahara','Fr. S. Antarctic Lands':'French Southern Lands','Fr. Polynesia':'French Polynesia',
+  'S. Geo. and the Is.':'South Georgia','Br. Indian Ocean Ter.':'British Indian Ocean Territory',
+  'St. Vin. and Gren.':'St. Vincent and the Grenadines','Antigua and Barb.':'Antigua and Barbuda','N. Cyprus':'Northern Cyprus',
+  'N. Mariana Is.':'Northern Mariana Islands','Heard I. and McDonald Is.':'Heard and McDonald Islands','Faeroe Is.':'Faroe Islands',
+  'Indian Ocean Ter.':'Australian Indian Ocean Territories'
+};
+const fixName = n => NAME_FIX[n] || n.replace(/\bIs\.$/,'Islands');
+const flagOf = a2 => a2 && a2.length === 2 ? String.fromCodePoint(...[...a2].map(c => 127397 + c.charCodeAt(0))) : '';
+
+// state name -> capital | nickname | fact
+const STATES_RAW = `Alabama|Montgomery|Yellowhammer State|Rockets that went to the Moon were built in Huntsville.
+Alaska|Juneau|The Last Frontier|The biggest state by far. You can see the northern lights dance in the sky.
+Arizona|Phoenix|Grand Canyon State|The Grand Canyon is more than 1.6 km deep.
+Arkansas|Little Rock|The Natural State|There is a park where you can dig for real diamonds and keep them.
+California|Sacramento|Golden State|The tallest trees in the world, giant redwoods, grow here.
+Colorado|Denver|Centennial State|It has more than 50 mountains taller than 14,000 feet.
+Connecticut|Hartford|Constitution State|The first hamburger in America may have been served here.
+Delaware|Dover|First State|It was the very first state to join the United States.
+Florida|Tallahassee|Sunshine State|Alligators and crocodiles live side by side in the Everglades.
+Georgia|Atlanta|Peach State|Famous for juicy peaches and peanuts.
+Hawaii|Honolulu|Aloha State|The islands were made by volcanoes, and some are still erupting.
+Idaho|Boise|Gem State|Grows more potatoes than any other state.
+Illinois|Springfield|Prairie State|Chicago is famous for deep-dish pizza.
+Indiana|Indianapolis|Hoosier State|The Indy 500 car race happens here every year.
+Iowa|Des Moines|Hawkeye State|There are more pigs here than people.
+Kansas|Topeka|Sunflower State|It is right in the middle of the lower 48 states.
+Kentucky|Frankfort|Bluegrass State|Mammoth Cave is the longest cave system in the world.
+Louisiana|Baton Rouge|Pelican State|Jazz music was born in New Orleans.
+Maine|Augusta|Pine Tree State|Famous for lobsters and lighthouses.
+Maryland|Annapolis|Old Line State|Famous for blue crabs from the Chesapeake Bay.
+Massachusetts|Boston|Bay State|Basketball was invented here in 1891.
+Michigan|Lansing|Great Lakes State|It touches four of the five Great Lakes.
+Minnesota|Saint Paul|Land of 10,000 Lakes|It actually has more than 11,000 lakes!
+Mississippi|Jackson|Magnolia State|The mighty Mississippi River runs along its side.
+Missouri|Jefferson City|Show-Me State|The Gateway Arch in St. Louis is the tallest arch in the world.
+Montana|Helena|Treasure State|Lots of dinosaur fossils have been found here.
+Nebraska|Lincoln|Cornhusker State|Kool-Aid was invented here.
+Nevada|Carson City|Silver State|Most of it is desert, and Las Vegas glows at night.
+New Hampshire|Concord|Granite State|Mount Washington has some of the strongest winds ever measured.
+New Jersey|Trenton|Garden State|Thomas Edison invented the light bulb here.
+New Mexico|Santa Fe|Land of Enchantment|Hot air balloons fill the sky at a giant festival in Albuquerque.
+New York|Albany|Empire State|The Statue of Liberty stands in New York Harbor.
+North Carolina|Raleigh|Tar Heel State|The Wright brothers made the first airplane flight here.
+North Dakota|Bismarck|Peace Garden State|
+Ohio|Columbus|Buckeye State|More astronauts come from here than any other state.
+Oklahoma|Oklahoma City|Sooner State|
+Oregon|Salem|Beaver State|Crater Lake is the deepest lake in the United States.
+Pennsylvania|Harrisburg|Keystone State|The Liberty Bell is in Philadelphia.
+Rhode Island|Providence|Ocean State|The smallest state.
+South Carolina|Columbia|Palmetto State|
+South Dakota|Pierre|Mount Rushmore State|Four giant presidents' faces are carved into a mountain here.
+Tennessee|Nashville|Volunteer State|Nashville is the home of country music.
+Texas|Austin|Lone Star State|The second-biggest state. Everything is big in Texas!
+Utah|Salt Lake City|Beehive State|The Great Salt Lake is so salty you float easily.
+Vermont|Montpelier|Green Mountain State|Makes more maple syrup than any other state.
+Virginia|Richmond|Old Dominion|Eight US presidents were born here.
+Washington|Olympia|Evergreen State|Grows more apples than any other state.
+West Virginia|Charleston|Mountain State|
+Wisconsin|Madison|America's Dairyland|Famous for cheese. Fans of its football team wear cheese hats!
+Wyoming|Cheyenne|Equality State|Yellowstone, the first national park in the world, is mostly here.
+District of Columbia|Washington|The Nation's Capital|The President lives here in the White House.`;
+const STATES = {};
+STATES_RAW.split('\n').forEach(l => { const [n,cap,nick,fact] = l.split('|'); STATES[n] = {cap,nick,fact}; });
+
+// name, lon, lat, tier (1 biggest), capital?, where, fact
+const CITIES = [
+ ['New York',-74.006,40.713,1,0,'United States','The Statue of Liberty welcomes ships here. More people live here than in any other US city.'],
+ ['Los Angeles',-118.24,34.05,1,0,'United States','Hollywood, where lots of movies are made, is part of LA.'],
+ ['Washington, D.C.',-77.04,38.9,1,1,'United States','The President lives and works in the White House here.'],
+ ['Mexico City',-99.13,19.43,1,1,'Mexico','It was built on top of an old lake.'],
+ ['Toronto',-79.38,43.65,1,0,'Canada','The CN Tower here has a glass floor you can stand on, way up high.'],
+ ['São Paulo',-46.63,-23.55,1,0,'Brazil','The biggest city in South America.'],
+ ['Rio de Janeiro',-43.17,-22.91,1,0,'Brazil','A giant statue of Christ stands on a mountain above the city.'],
+ ['Buenos Aires',-58.38,-34.6,1,1,'Argentina','Famous for the tango dance.'],
+ ['Lima',-77.04,-12.05,1,1,'Peru',''],
+ ['Bogotá',-74.07,4.71,1,1,'Colombia','It sits high in the mountains, about 2,600 meters up.'],
+ ['London',-0.13,51.51,1,1,'United Kingdom','Big Ben is really the name of the giant bell inside the clock tower.'],
+ ['Paris',2.35,48.86,1,1,'France','Home of the Eiffel Tower.'],
+ ['Rome',12.5,41.9,1,1,'Italy','The Colosseum here is almost 2,000 years old.'],
+ ['Berlin',13.4,52.52,1,1,'Germany',''],
+ ['Madrid',-3.7,40.42,1,1,'Spain',''],
+ ['Moscow',37.62,55.76,1,1,'Russia','St. Basil\'s Cathedral has colorful onion-shaped domes.'],
+ ['Istanbul',28.98,41.01,1,0,'Turkey','Half of the city is in Europe and half is in Asia.'],
+ ['Cairo',31.24,30.04,1,1,'Egypt','The Great Pyramids are just outside the city.'],
+ ['Lagos',3.38,6.52,1,0,'Nigeria','One of the biggest cities in Africa.'],
+ ['Nairobi',36.82,-1.29,1,1,'Kenya','Giraffes and lions live in a national park right next to the city.'],
+ ['Cape Town',18.42,-33.92,1,0,'South Africa','Penguins live on a beach nearby, and Table Mountain is flat on top.'],
+ ['Dubai',55.27,25.2,1,0,'United Arab Emirates','The Burj Khalifa, the tallest building in the world, is here.'],
+ ['Mumbai',72.88,19.08,1,0,'India','Bollywood makes more movies here than anywhere else in the world.'],
+ ['New Delhi',77.21,28.61,1,1,'India',''],
+ ['Beijing',116.4,39.9,1,1,'China','The Forbidden City palace has almost 1,000 buildings.'],
+ ['Shanghai',121.47,31.23,1,0,'China','Its Maglev train floats on magnets and goes super fast.'],
+ ['Tokyo',139.69,35.69,1,1,'Japan','More people live in the Tokyo area than in any other city area on Earth.'],
+ ['Seoul',126.98,37.57,1,1,'South Korea',''],
+ ['Bangkok',100.5,13.76,1,1,'Thailand',''],
+ ['Singapore',103.82,1.35,1,1,'Singapore','The city is a whole country!'],
+ ['Jakarta',106.85,-6.21,1,1,'Indonesia',''],
+ ['Sydney',151.21,-33.87,1,0,'Australia','The Opera House roof looks like giant sails.'],
+ ['Ottawa',-75.7,45.42,2,1,'Canada','In winter a canal here freezes into a giant skating rink.'],
+ ['Canberra',149.13,-35.28,2,1,'Australia','It was built on purpose to be the capital.'],
+ ['Brasília',-47.88,-15.79,2,1,'Brazil','From above, the city is shaped like an airplane.'],
+ ['Reykjavík',-21.94,64.15,2,1,'Iceland','The northernmost capital city of a country.'],
+ ['Honolulu',-157.86,21.31,2,1,'Hawaii, United States','Surfers ride big waves at Waikiki Beach.'],
+ ['Anchorage',-149.9,61.22,2,0,'Alaska, United States','Moose sometimes walk right through town.'],
+ ['Chicago',-87.63,41.88,2,0,'United States','A giant shiny sculpture here is nicknamed The Bean.'],
+ ['San Francisco',-122.42,37.77,2,0,'United States','The Golden Gate Bridge is actually painted orange.'],
+ ['Seattle',-122.33,47.61,2,0,'United States','The Space Needle looks like a flying saucer on a stick.'],
+ ['Miami',-80.19,25.76,2,0,'United States',''],
+ ['Houston',-95.37,29.76,2,0,'United States','NASA Mission Control talks to astronauts from here.'],
+ ['Vancouver',-123.12,49.28,2,0,'Canada',''],
+ ['Montreal',-73.57,45.5,2,0,'Canada','Most people here speak French.'],
+ ['Havana',-82.37,23.11,2,1,'Cuba','Colorful old cars from the 1950s still drive the streets.'],
+ ['Santiago',-70.67,-33.45,2,1,'Chile',''],
+ ['Caracas',-66.9,10.48,2,1,'Venezuela',''],
+ ['Quito',-78.47,-0.18,2,1,'Ecuador','It sits very close to the equator, the line around the middle of Earth.'],
+ ['Athens',23.73,37.98,2,1,'Greece','The Acropolis temples on the hill are about 2,500 years old.'],
+ ['Amsterdam',4.9,52.37,2,1,'Netherlands','It has more canals than Venice.'],
+ ['Stockholm',18.07,59.33,2,1,'Sweden','The city is built on 14 islands.'],
+ ['Oslo',10.75,59.91,2,1,'Norway',''],
+ ['Dublin',-6.26,53.35,2,1,'Ireland',''],
+ ['Lisbon',-9.14,38.72,2,1,'Portugal',''],
+ ['Vienna',16.37,48.21,2,1,'Austria',''],
+ ['Warsaw',21.01,52.23,2,1,'Poland',''],
+ ['Kyiv',30.52,50.45,2,1,'Ukraine',''],
+ ['Johannesburg',28.05,-26.2,2,0,'South Africa',''],
+ ['Addis Ababa',38.75,9.03,2,1,'Ethiopia',''],
+ ['Kinshasa',15.27,-4.44,2,1,'DR Congo',''],
+ ['Casablanca',-7.59,33.57,2,0,'Morocco',''],
+ ['Riyadh',46.68,24.71,2,1,'Saudi Arabia',''],
+ ['Tehran',51.39,35.69,2,1,'Iran',''],
+ ['Karachi',67.0,24.86,2,0,'Pakistan',''],
+ ['Kolkata',88.36,22.57,2,0,'India',''],
+ ['Kathmandu',85.32,27.72,2,1,'Nepal','Climbers start their trips to Mount Everest from here.'],
+ ['Hong Kong',114.17,22.32,2,0,'China','It has more skyscrapers than any other city.'],
+ ['Manila',120.98,14.6,2,1,'Philippines',''],
+ ['Hanoi',105.85,21.03,2,1,'Vietnam',''],
+ ['Kuala Lumpur',101.69,3.14,2,1,'Malaysia','The Petronas Twin Towers are joined by a sky bridge.'],
+ ['Melbourne',144.96,-37.81,2,0,'Australia',''],
+ ['Auckland',174.76,-36.85,2,0,'New Zealand','It is built on top of about 50 old volcanoes.'],
+ ['Wellington',174.78,-41.29,2,1,'New Zealand','The southernmost capital city of a country.'],
+ ['Perth',115.86,-31.95,2,0,'Australia',''],
+ ['Osaka',135.5,34.69,2,0,'Japan',''],
+ ['Ulaanbaatar',106.92,47.89,2,1,'Mongolia','The coldest capital city in the world.'],
+ ['Boston',-71.06,42.36,3,0,'United States','The Boston Tea Party happened here in 1773.'],
+ ['Philadelphia',-75.17,39.95,3,0,'United States','The Liberty Bell is here.'],
+ ['Atlanta',-84.39,33.75,3,0,'United States','It has one of the busiest airports in the world.'],
+ ['Dallas',-96.8,32.78,3,0,'United States',''],
+ ['Denver',-104.99,39.74,3,0,'United States','Nicknamed the Mile High City because it is one mile above sea level.'],
+ ['Phoenix',-112.07,33.45,3,0,'United States','One of the sunniest cities in the country.'],
+ ['Las Vegas',-115.14,36.17,3,0,'United States','A city of bright lights in the middle of the desert.'],
+ ['New Orleans',-90.07,29.95,3,0,'United States','Jazz music was born here.'],
+ ['Nashville',-86.78,36.16,3,0,'United States','The home of country music.'],
+ ['Orlando',-81.38,28.54,3,0,'United States','Famous for its theme parks.'],
+ ['San Diego',-117.16,32.72,3,0,'United States','It has a famous zoo with more than 12,000 animals.'],
+ ['Portland',-122.68,45.52,3,0,'United States',''],
+ ['Salt Lake City',-111.89,40.76,3,0,'United States',''],
+ ['Minneapolis',-93.27,44.98,3,0,'United States',''],
+ ['Detroit',-83.05,42.33,3,0,'United States','Nicknamed Motor City because so many cars were built here.'],
+ ['St. Louis',-90.2,38.63,3,0,'United States','The Gateway Arch is 192 meters tall.'],
+ ['Venice',12.32,45.44,3,0,'Italy','It has canals instead of streets, and people ride in boats.'],
+ ['Barcelona',2.17,41.39,3,0,'Spain','A church here called the Sagrada Família has been under construction since 1882!'],
+ ['Edinburgh',-3.19,55.95,3,1,'Scotland, United Kingdom','A castle sits on top of an old volcano in the middle of town.'],
+ ['Marrakesh',-7.99,31.63,3,0,'Morocco','Its big market square is full of storytellers and snake charmers.'],
+ ['Kyoto',135.77,35.01,3,0,'Japan','It has more than 1,000 temples.'],
+ ['Agra',78.01,27.18,3,0,'India','The Taj Mahal, a giant white marble building, is here.']
+];
+
+/* ---------------- STATE ---------------- */
+const $ = s => document.querySelector(s);
+const layers = {oceans:true, continents:true, countries:true, states:true, cities:true, sound:true};
+let W = innerWidth, H = innerHeight, k0 = 1, T = d3.zoomIdentity;
+let selected = null, current = null;
+
+const svg = d3.select('#map');
+const BW = 1000;
+const sphere = {type:'Sphere'};
+const projection = d3.geoNaturalEarth1().fitWidth(BW, sphere);
+const path = d3.geoPath(projection);
+const BH = path.bounds(sphere)[1][1];
+
+const defs = svg.append('defs');
+const wave = defs.append('pattern').attr('id','waves').attr('width',24).attr('height',12).attr('patternUnits','userSpaceOnUse');
+wave.append('path').attr('d','M0 8 q3 -3 6 0 t6 0').attr('fill','none').attr('stroke','#fff').attr('stroke-opacity',.55).attr('stroke-width',.6);
+
+const root = svg.append('g');
+const gOcean = root.append('g');
+const gCountries = root.append('g');
+const gStates = root.append('g');
+const gFx = root.append('g');
+const gLabels = svg.append('g');      // screen space
+const gScreenFx = svg.append('g');
+
+const zoom = d3.zoom()
+  .scaleExtent([0.5, 60])
+  .clickDistance(10).tapDistance(14)
+  .on('zoom', e => { T = e.transform; root.attr('transform', T); scheduleLabels(); });
+svg.call(zoom);
+svg.on('dblclick.zoom', onDoubleTap);   // d3 also routes touch double-taps here
+document.addEventListener('gesturestart', e => e.preventDefault());
+
+/* ---------------- HELPERS ---------------- */
+function hash(s){ let h = 0; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h); }
+function shade(hex, s){ const c = d3.hsl(hex); c.l = Math.max(.7, Math.min(.94, c.l + ((hash(s) % 5) - 2) * .025)); return c.formatHex(); }
+const RAINBOW = ['#f9cdbb','#fbdcae','#f6e9a3','#c5e8c8','#bfe3ec','#cfd8f6','#d8cdf2','#f5c6d6','#c9ecdf','#fde3c4'];
+function largestPart(f){
+  if (f.geometry.type !== 'MultiPolygon') return f;
+  let best = null, ba = -1;
+  for (const coords of f.geometry.coordinates){
+    const g = {type:'Feature', geometry:{type:'Polygon', coordinates:coords}};
+    const a = path.area(g); if (a > ba){ ba = a; best = g; }
+  }
+  return best;
+}
+function say(text){
+  if (!layers.sound || !('speechSynthesis' in window)) return;
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.rate = .92; u.pitch = 1.15; speechSynthesis.speak(u); } catch(e){}
+}
+function screenPt(lonlat){ return T.apply(projection(lonlat)); }
+function ripple(x, y){
+  gScreenFx.append('circle').attr('class','ripple').attr('cx',x).attr('cy',y).attr('r',6).attr('stroke-opacity',1)
+    .transition().duration(550).attr('r',44).attr('stroke-opacity',0).remove();
+}
+let toastTimer;
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.hidden = false;
+  t.style.animation = 'none'; void t.offsetWidth; t.style.animation = '';
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.hidden = true, 2200);
+}
+
+/* ---------------- OCEAN LOOKUP ---------------- */
+function oceanAt(lon, lat){
+  if (lat > 66) return 'arctic';
+  if (lat < -58) return 'southern';
+  if (lat > 51 && lat < 64 && lon > -95 && lon < -76) return 'hudson';
+  if (lon > 27 && lon < 42 && lat > 40.5 && lat < 47.5) return 'black';
+  if (lon > 46 && lon < 55.5 && lat > 36 && lat < 47.5) return 'caspian';
+  if (lon > -6 && lon < 37 && lat > 30 && lat < 46.5) return 'med';
+  if (lon > 32 && lon < 44 && lat > 12 && lat < 30) return 'red';
+  if (lon > -98 && lon < -81 && lat > 18 && lat < 31) return 'gulf';
+  if (lon > -89 && lon < -60 && lat > 9 && lat < 22) return 'carib';
+  if ((lat < 10 && lon > -70 && lon < 20) || (lat >= 10 && lat < 20 && lon > -88 && lon < 20) ||
+      (lat >= 20 && lat < 31 && lon > -98 && lon < 20) || (lat >= 31 && lon > -100 && lon < 45)) return 'atlantic';
+  if (lon >= 20 && lon < 147 && lat < 31 && !(lon >= 100 && lat > -8) && !(lon >= 130 && lat > -15)) return 'indian';
+  return 'pacific';
+}
+
+/* ---------------- LABELS ---------------- */
+const labelItems = [];
+function addLabel(o){
+  const g = gLabels.append('g').attr('class','lbl ' + o.cls + (o.onTap ? ' tap' : ''));
+  if (o.marker) o.marker(g);
+  const t = g.append('text').text(o.text).attr('font-size', o.size).attr('dy','.35em');
+  if (o.dx){ t.attr('x', o.dx).attr('text-anchor','start'); } else t.attr('text-anchor','middle');
+  if (o.onTap) g.on('click', e => { e.stopPropagation(); o.onTap(e); });
+  if (o.item) g.node().__label = o;
+  o.g = g; o.t = t; o.w = o.text.length * o.size * .58; o.h = o.size * 1.2;
+  labelItems.push(o);
+  return o;
+}
+function measureLabels(){
+  for (const o of labelItems){
+    o.g.style('display', null); o.vis = undefined;
+    try { const w = o.t.node().getComputedTextLength(); if (w) o.w = w; } catch(e){}
+  }
+  updateLabels();
+}
+let raf = 0;
+function scheduleLabels(){ if (!raf) raf = requestAnimationFrame(() => { raf = 0; updateLabels(); }); }
+function updateLabels(){
+  const z = T.k / k0, placed = [];
+  const hit = b => placed.some(p => b[0] < p[2] && b[2] > p[0] && b[1] < p[3] && b[3] > p[1]);
+  for (const o of labelItems){
+    let show = layers[o.layer] && z >= (o.minZ || 0) && z < (o.maxZ || 1e9);
+    if (show && o.span && o.w > o.span * T.k * 1.25 && !(o.forceZ && z >= o.forceZ)) show = false;
+    if (show && o.hideWhen && o.hideWhen(z)) show = false;
+    let x, y;
+    if (show){ [x, y] = T.apply(o.p); if (x < -150 || x > W + 150 || y < -40 || y > H + 40) show = false; }
+    if (!show){ if (o.vis !== false){ o.g.style('display','none'); o.vis = false; } continue; }
+    let showText = true;
+    const b = o.dx ? [x + o.dx - 2, y - o.h/2, x + o.dx + o.w + 2, y + o.h/2] : [x - o.w/2 - 2, y - o.h/2, x + o.w/2 + 2, y + o.h/2];
+    if (hit(b)){ if (!o.marker) { if (o.vis !== false){ o.g.style('display','none'); o.vis = false; } continue; } showText = false; }
+    else placed.push(b);
+    if (o.vis !== true){ o.g.style('display', null); o.vis = true; }
+    o.g.attr('transform', `translate(${x.toFixed(1)},${y.toFixed(1)})`);
+    o.t.style('display', showText ? null : 'none');
+  }
+}
+
+/* ---------------- RENDER ---------------- */
+let countries = [], states = [];
+function colorCountry(d){
+  if (layers.continents) return d.c === 'AN' ? '#fbfdff' : shade(CONT[d.c]?.color || '#ccc', d.id || d.name);
+  return d.c === 'AN' ? '#fbfdff' : RAINBOW[hash(d.name) % RAINBOW.length];
+}
+function recolor(){ gCountries.selectAll('path').attr('fill', colorCountry); }
+
+async function load(){
+  const [world, us] = await Promise.all([
+    fetch('data/countries.json').then(r => r.json()),
+    fetch('data/states.json').then(r => r.json())
+  ]);
+
+  gOcean.append('path').datum(sphere).attr('class','ocean').attr('d', path).on('click', onOceanTap);
+  gOcean.append('path').datum(sphere).attr('d', path).attr('fill','url(#waves)').attr('pointer-events','none');
+  gOcean.append('path').datum(d3.geoGraticule10()).attr('class','grat').attr('d', path);
+  gFx.append('path').datum(sphere).attr('class','sphere-edge').attr('d', path);
+
+  countries = topojson.feature(world, world.objects.countries).features.map(f => {
+    const raw = f.properties.name;
+    const info = (f.id && INFO[f.id] && raw !== 'Ashmore and Cartier Is.') ? INFO[f.id] : (BY_NAME[raw] || {a2:'',c:'AS'});
+    const lp = largestPart(f);
+    const b = path.bounds(lp);
+    return {f, id:f.id || raw, raw, name:fixName(raw), a2:info.a2, c:info.c, cap:info.cap, fact:info.fact,
+            area:path.area(f), lp, center:path.centroid(lp), span:b[1][0] - b[0][0]};
+  });
+  const OVR = {'840':[-98,39],'124':[-105,58],'643':[95,62],'360':[114,-1],'304':[-41,73],'578':[9,61.5]};
+  countries.forEach(d => { if (OVR[d.id]) d.center = projection(OVR[d.id]); });
+  const ranked = [...countries].sort((a,b) => b.area - a.area);
+  ranked.forEach((d,i) => d.rank = i);
+
+  gCountries.selectAll('path').data(countries).join('path')
+    .attr('class','country').attr('d', d => path(d.f)).attr('fill', colorCountry)
+    .on('click', (e,d) => { e.stopPropagation(); onShapeTap(e, {type:'country', d}); });
+
+  const usStates = topojson.feature(us, us.objects.states).features.filter(f => STATES[f.properties.name]);
+  const GREENS = ['#c5e8c8','#b8e1bd','#d2eed4','#bfe4cc','#cde9c0'];
+  states = usStates.map(f => { const lp = largestPart(f); const b = path.bounds(lp);
+    return {f, lp, name:f.properties.name, ...STATES[f.properties.name], center:path.centroid(lp), span:b[1][0]-b[0][0], area:path.area(f)}; });
+  const SOV = {'Florida':[-81.7,28.3],'Michigan':[-84.6,43.6],'Louisiana':[-92.3,31],'Alaska':[-152,64],'Hawaii':[-155.5,19.7]};
+  states.forEach(d => { if (SOV[d.name]) d.center = projection(SOV[d.name]); });
+  gStates.selectAll('path').data(states).join('path')
+    .attr('class','state').attr('d', d => path(d.f)).attr('fill', d => GREENS[hash(d.name) % GREENS.length])
+    .on('click', (e,d) => { e.stopPropagation(); onShapeTap(e, {type:'state', d}); });
+
+  // labels, in priority order
+  for (const [key, c] of Object.entries(CONT)){
+    addLabel({cls:'cont-l', layer:'continents', text:c.name, size:14, p:projection(c.pos), maxZ:1.9,
+      item:() => ({type:'continent', key, c}), onTap:e => select({type:'continent', key, c}, e)});
+  }
+  for (const [key, o] of Object.entries(OCEANS)){
+    o.pos.forEach(p => addLabel({cls: o.big ? 'ocean-l' : 'sea-l', layer:'oceans', text:o.name, size:o.big ? 19 : 14,
+      p:projection(p), minZ:o.big ? 0 : 2.4, maxZ:o.big ? 14 : 30, item:() => ({type:'ocean', key, o}), onTap:e => select({type:'ocean', key, o}, e)}));
+  }
+  ranked.forEach(d => addLabel({cls:'country-l', layer:'countries', text:d.name, size:d.rank < 20 ? 15 : 12.5,
+    p:d.center, minZ:1.45, span:d.span, forceZ:d.rank < 60 ? 6 : 14,
+    hideWhen: d.id === '840' ? z => layers.states && z > 2.2 : null}));
+  [...states].sort((a,b) => b.area - a.area).forEach(d => addLabel({cls:'state-l', layer:'states', text:d.name, size:12.5,
+    p:d.center, minZ:2.2, span:d.span, forceZ:12}));
+  CITIES.forEach(c => {
+    const city = {name:c[0], lonlat:[c[1],c[2]], tier:c[3], cap:!!c[4], where:c[5], fact:c[6]};
+    addLabel({cls:'city', layer:'cities', text:city.name, size:12.5, dx:city.cap ? 11 : 8, p:projection(city.lonlat),
+      minZ:[0,1.6,3.2,5.5][city.tier],
+      marker: g => city.cap ? g.append('path').attr('d', d3.symbol(d3.symbolStar, 130)()) : g.append('circle').attr('r', 4.5),
+      item:() => ({type:'city', d:city}), onTap:e => select({type:'city', d:city}, e)});
+  });
+
+  $('#loading').remove();
+  resize(true);
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(measureLabels);
+}
+
+/* ---------------- VIEW ---------------- */
+function homeTransform(){
+  const k = Math.min(W / BW, H / BH) * 1.0;
+  const kk = Math.max(k, Math.min(W / BW, (H * .9) / BH));
+  return d3.zoomIdentity.translate((W - BW * kk) / 2, (H - BH * kk) / 2 + 10).scale(kk);
+}
+function resize(first){
+  W = innerWidth; H = innerHeight;
+  const h = homeTransform(); k0 = h.k;
+  zoom.scaleExtent([k0 * .8, k0 * 60]).translateExtent([[-BW * .25, -BH * .3], [BW * 1.25, BH * 1.3]]).extent([[0,0],[W,H]]);
+  if (first) svg.call(zoom.transform, h); else svg.transition().duration(300).call(zoom.transform, h);
+  measureLabels();
+}
+addEventListener('resize', () => { clearTimeout(resize.t); resize.t = setTimeout(() => resize(false), 150); });
+
+/* view history, so Back returns to where you were */
+const viewHistory = [];
+function pushView(){ viewHistory.push(T); if (viewHistory.length > 30) viewHistory.shift(); $('#zback').hidden = false; }
+function goBack(){
+  const t = viewHistory.pop(); $('#zback').hidden = !viewHistory.length;
+  svg.transition().duration(700).ease(d3.easeCubicInOut).call(zoom.transform, t || homeTransform());
+}
+$('#zback').onclick = goBack;
+addEventListener('keydown', e => {
+  if (e.key === 'Escape' || e.key === 'Backspace'){ if (viewHistory.length){ e.preventDefault(); goBack(); } }
+  if (e.key === '+' || e.key === '='){ svg.transition().duration(300).call(zoom.scaleBy, 1.8); }
+  if (e.key === '-'){ svg.transition().duration(300).call(zoom.scaleBy, 1/1.8); }
+});
+addEventListener('mouseup', e => { if (e.button === 3){ e.preventDefault(); goBack(); } });  // mouse "back" side button
+
+let lastDbl = 0;
+function onDoubleTap(e){
+  const now = Date.now(); if (now - lastDbl < 450) return; lastDbl = now;
+  if (e.cancelable) e.preventDefault();
+  const pt = e.changedTouches ? e.changedTouches[0] : e;
+  const [mx, my] = d3.pointer(pt, svg.node());
+  const el = document.elementFromPoint(pt.clientX, pt.clientY);
+  const d = el && el.__data__;
+  const g = el && el.closest && el.closest('.tap');
+  let item = null;
+  if (d && d.f && d.lp && el.classList.contains('country')) item = {type:'country', d};
+  else if (d && d.f && el.classList.contains('state')) item = {type:'state', d};
+  if (item){ pushView(); zoomToBounds(path.bounds(item.d.lp)); return; }
+  if (g && g.__label){ const i = describe(g.__label.item()); pushView(); zoomToPoint(i.point, Math.max(i.z, T.k / k0 * 1.8)); return; }
+  pushView();
+  const p = T.invert([mx, my]);
+  zoomToPoint(p, Math.min(60, T.k / k0 * 2.2));
+}
+
+function zoomToBounds(b, maxZ = 14){
+  if (!b || !isFinite(b[0][0])) return;
+  const dx = b[1][0] - b[0][0], dy = b[1][1] - b[0][1];
+  const cx = (b[0][0] + b[1][0]) / 2, cy = (b[0][1] + b[1][1]) / 2;
+  const k = Math.min(k0 * maxZ, Math.max(k0, .6 / Math.max(dx / W, dy / H)));
+  svg.transition().duration(900).ease(d3.easeCubicInOut)
+    .call(zoom.transform, d3.zoomIdentity.translate(W/2, H/2).scale(k).translate(-cx, -cy));
+}
+function zoomToPoint(p, z){
+  svg.transition().duration(900).ease(d3.easeCubicInOut)
+    .call(zoom.transform, d3.zoomIdentity.translate(W/2, H/2).scale(k0 * z).translate(-p[0], -p[1]));
+}
+$('#zin').onclick = () => svg.transition().duration(300).call(zoom.scaleBy, 1.8);
+$('#zout').onclick = () => svg.transition().duration(300).call(zoom.scaleBy, 1/1.8);
+$('#zhome').onclick = () => { if (T.k / k0 > 1.05) pushView(); } ; $('#zhome').addEventListener('click', () => svg.transition().duration(700).call(zoom.transform, homeTransform()));
+
+/* ---------------- HOVER (mouse) ---------------- */
+const tip = $('#tip');
+svg.on('pointermove', e => {
+  if (e.pointerType !== 'mouse' || e.buttons) { tip.hidden = true; return; }
+  const d = e.target.__data__;
+  let name = null;
+  if (e.target.classList.contains('country') || e.target.classList.contains('state')) name = d.name;
+  else if (e.target.classList.contains('ocean')){ const ll = projection.invert(T.invert(d3.pointer(e, svg.node()))); if (ll) name = OCEANS[oceanAt(ll[0], ll[1])].name; }
+  if (!name){ tip.hidden = true; return; }
+  tip.textContent = name; tip.hidden = false; tip.style.left = e.clientX + 'px'; tip.style.top = e.clientY + 'px';
+});
+svg.on('pointerleave', () => tip.hidden = true);
+svg.on('pointerdown.tip', () => tip.hidden = true);
+
+/* ---------------- TAPS ---------------- */
+function onShapeTap(e, item){ select(item, e); }
+function onOceanTap(e){
+  const [mx, my] = d3.pointer(e, svg.node());
+  const ll = projection.invert(T.invert([mx, my]));
+  if (!ll) return;
+  const key = oceanAt(ll[0], ll[1]);
+  select({type:'ocean', key, o:OCEANS[key]}, e);
+}
+
+const ICON = {
+  ocean:'<svg viewBox="0 0 40 40"><path d="M4 16c4-4 8-4 12 0s8 4 12 0 6-3 8-2M4 24c4-4 8-4 12 0s8 4 12 0 6-3 8-2" fill="none" stroke="#5d8fae" stroke-width="2.6" stroke-linecap="round"/></svg>',
+  continent:'<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="#fff" stroke="#36405a" stroke-width="2"/><path d="M11 15c3-2 5 0 7-1s4-2 5 0-1 4 1 6 5 1 4 4-4 4-6 4-2-3-5-3-4 2-6 0-1-4-1-6 0-2 1-4z" fill="#c5e8c8"/></svg>',
+  city:'<svg viewBox="0 0 40 40"><path d="M8 32V18l7-4v18M15 32V9l9 4v19M24 32V19l8 3v10" fill="#fff" stroke="#36405a" stroke-width="2" stroke-linejoin="round"/><path d="M6 32h28" stroke="#36405a" stroke-width="2" stroke-linecap="round"/></svg>',
+  capital:'<svg viewBox="0 0 40 40"><path d="M20 6l4.3 9.2 10.1 1-7.6 6.8 2.2 9.9L20 28l-9 4.9 2.2-9.9-7.6-6.8 10.1-1z" fill="#f2a3ba" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg>'
+};
+function describe(item){
+  if (item.type === 'country'){
+    const d = item.d, cont = CONT[d.c]?.name;
+    const rows = [['Continent', cont]]; if (d.cap) rows.push(['Capital', d.cap]);
+    return {kind:'Country', kindbg:CONT[d.c]?.color, flag:flagOf(d.a2) || ICON.continent, name:d.name, rows,
+      fact:d.fact || (d.cap ? `Its capital city is ${d.cap}. Can you find it on the map?` : `It is part of ${cont}.`),
+      speak:d.name, bounds:path.bounds(d.lp)};
+  }
+  if (item.type === 'state'){
+    const d = item.d;
+    return {kind:d.name === 'District of Columbia' ? 'US Capital' : 'US State', kindbg:'#c5e8c8', flag:'🇺🇸', name:d.name,
+      rows:[['Capital', d.cap], ['Nickname', d.nick]], fact:d.fact || `Its nickname is the ${d.nick}.`,
+      speak:d.name, bounds:path.bounds(d.lp)};
+  }
+  if (item.type === 'ocean'){
+    const o = item.o;
+    return {kind:o.big ? 'Ocean' : 'Sea', kindbg:'#e3f1f9', flag:ICON.ocean, name:o.name, rows:[], fact:o.fact, speak:o.name,
+      point:projection(o.pos[0]), z:o.big ? 1.5 : 4};
+  }
+  if (item.type === 'continent'){
+    const c = item.c, n = countries.filter(d => d.c === item.key && d.cap).length;
+    return {kind:'Continent', kindbg:c.color, flag:ICON.continent, name:c.name, rows:n ? [['Countries on this map', n]] : [],
+      fact:c.fact, speak:c.name, point:projection(c.pos), z:item.key === 'EU' ? 3.5 : 2.2};
+  }
+  if (item.type === 'city'){
+    const d = item.d;
+    return {kind:d.cap ? 'Capital City' : 'City', kindbg:'#fdf0dc', flag:d.cap ? ICON.capital : ICON.city, name:d.name,
+      rows:[['Where', d.where]], fact:d.fact || `${d.name} is a big city in ${d.where}.`, speak:d.name,
+      point:projection(d.lonlat), z:9};
+  }
+}
+
+function select(item, e){
+  const now = Date.now(); if (select.last && sameThing(select.last, item) && now - select.lastT < 500) return; select.last = item; select.lastT = now;
+  if (e){ const [x, y] = d3.pointer(e, svg.node()); ripple(x, y); }
+  if (game.on){ checkAnswer(item); return; }
+  showCard(item);
+  say(describe(item).speak);
+}
+
+function showCard(item, found){
+  current = item;
+  const info = describe(item);
+  gCountries.selectAll('.sel').classed('sel', false);
+  gStates.selectAll('.sel').classed('sel', false);
+  if (item.type === 'country') gCountries.selectAll('path').filter(d => d === item.d).classed('sel', true).raise();
+  if (item.type === 'state') gStates.selectAll('path').filter(d => d === item.d).classed('sel', true).raise();
+  const card = $('#card');
+  card.hidden = false; card.style.pointerEvents = 'none'; clearTimeout(card._t); card._t = setTimeout(() => card.style.pointerEvents = '', 450);  // let a double-click reach the map
+  card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
+  $('#cFound').hidden = !found; if (found) $('#cFound').textContent = found;
+  const fl = $('#cFlag'); info.flag.startsWith('<svg') ? fl.innerHTML = info.flag : fl.textContent = info.flag;
+  const kind = $('#cKind'); kind.textContent = info.kind; fl.style.setProperty('--flagbg', info.kindbg || '#eef4f8');
+  $('#cName').textContent = info.name;
+  $('#cRows').innerHTML = '';
+  info.rows.forEach(([k, v]) => { const dt = document.createElement('dt'); dt.textContent = k; const dd = document.createElement('dd'); dd.textContent = v; $('#cRows').append(dt, dd); });
+  $('#cRows').hidden = !info.rows.length;
+  $('#cFact span').textContent = info.fact;
+}
+$('#cClose').onclick = () => { $('#card').hidden = true; current = null; gCountries.selectAll('.sel').classed('sel', false); gStates.selectAll('.sel').classed('sel', false); };
+$('#cSay').onclick = () => { if (!current) return; const i = describe(current); const was = layers.sound; layers.sound = true; say(`${i.name}. ${i.fact}`); layers.sound = was; };
+$('#cZoom').onclick = () => { if (!current) return; pushView(); const i = describe(current); i.bounds ? zoomToBounds(i.bounds) : zoomToPoint(i.point, i.z); };
+
+/* ---------------- LAYER TOGGLES ---------------- */
+['oceans','continents','countries','states','cities','sound'].forEach(k => {
+  const b = $('#l-' + k);
+  b.onclick = () => {
+    layers[k] = !layers[k]; b.setAttribute('aria-pressed', layers[k]);
+    if (k === 'states') gStates.attr('display', layers.states ? null : 'none');
+    if (k === 'continents') recolor();
+    if (k === 'sound' && !layers.sound) try { speechSynthesis.cancel(); } catch(e){}
+    updateLabels();
+  };
+});
+
+/* ---------------- FIND IT GAME ---------------- */
+const game = {on:false, mode:'easy', target:null, stars:0, misses:0};
+try { game.stars = +localStorage.getItem('peekaworld-stars') || 0; } catch(e){}
+function pool(){
+  if (game.mode === 'states') return states.filter(d => d.name !== 'District of Columbia').map(d => ({type:'state', d}));
+  const real = countries.filter(d => d.cap && d.c !== 'AN');
+  if (game.mode === 'hard') return real.map(d => ({type:'country', d}));
+  const big = real.filter(d => d.rank < 55).map(d => ({type:'country', d}));
+  const oc = Object.entries(OCEANS).filter(([,o]) => o.big).map(([key,o]) => ({type:'ocean', key, o}));
+  return big.concat(oc, oc);
+}
+function nameOf(item){ return item.type === 'ocean' ? item.o.name : item.d.name; }
+function sameThing(a, b){
+  if (a.type !== b.type) return false;
+  return (a.type === 'ocean' || a.type === 'continent') ? a.key === b.key : a.d === b.d;
+}
+function nextTarget(){
+  const p = pool(); let t;
+  do { t = p[Math.floor(Math.random() * p.length)]; } while (game.target && p.length > 1 && sameThing(t, game.target));
+  game.target = t; game.misses = 0;
+  const flag = t.type === 'country' ? flagOf(t.d.a2) : t.type === 'ocean' ? '' : '🇺🇸';
+  $('#ask').innerHTML = '';
+  const f = document.createElement('span'); f.className = 'gflag'; f.textContent = flag;
+  const b = document.createElement('b'); b.textContent = nameOf(t);
+  const the = t.type === 'ocean' ? 'the ' : '';
+  $('#ask').append(f, 'Find ' + the, b, '!');
+  say(`Can you find ${the}${nameOf(t)}?`);
+}
+function setStars(n){ game.stars = n; $('#gStars').textContent = n; try { localStorage.setItem('peekaworld-stars', n); } catch(e){} }
+function startGame(){
+  game.on = true; $('#game').hidden = false; $('#cClose').onclick(); placeGame(); setStars(game.stars);
+  if (game.mode === 'states'){ ensureStates(); zoomToBounds([projection([-125,50]), projection([-66,24])], 5); }
+  else svg.transition().duration(600).call(zoom.transform, homeTransform());
+  game.target = null; nextTarget();
+}
+function placeGame(){ $('#game').style.top = ($('.top').getBoundingClientRect().bottom + 12) + 'px'; }
+addEventListener('resize', () => game.on && placeGame());
+function ensureStates(){ if (!layers.states){ layers.states = true; $('#l-states').setAttribute('aria-pressed', true); gStates.attr('display', null); updateLabels(); } }
+function checkAnswer(item){
+  const t = game.target;
+  if (sameThing(item, t)){
+    setStars(game.stars + 1);
+    confetti(game.stars % 5 === 0 ? 260 : 120);
+    const cheer = game.stars % 5 === 0 ? `Super explorer! ${game.stars} stars!` : ['You found it!','Great job!','Nice one!','Awesome!','Yes, that\'s it!'][Math.floor(Math.random()*5)];
+    say(`${cheer} ${nameOf(t)}!`);
+    showCard(item, cheer);
+    setTimeout(nextTarget, 1400);
+  } else {
+    game.misses++;
+    const g = $('#game'); g.classList.remove('shake'); void g.offsetWidth; g.classList.add('shake');
+    const n = nameOf(item);
+    toast(`That's ${n}. Try again!`);
+    say(`That's ${n}. Try again!`);
+    if (game.misses === 3) hint();
+  }
+}
+function hint(){
+  const t = game.target;
+  if (t.type === 'ocean'){
+    const p = T.apply(projection(t.o.pos[0]));
+    for (let i = 0; i < 3; i++) gScreenFx.append('circle').attr('class','hint-ring').attr('cx',p[0]).attr('cy',p[1]).attr('r',10).attr('opacity',1)
+      .transition().delay(i * 350).duration(900).attr('r',80).attr('opacity',0).remove();
+  } else {
+    const g = t.type === 'country' ? gCountries : gStates;
+    const sel = g.selectAll('path').filter(d => d === t.d);
+    sel.raise().classed('hint', false); void document.body.offsetWidth; sel.classed('hint', true);
+    setTimeout(() => sel.classed('hint', false), 3200);
+    const b = path.bounds(t.d.lp), c = [(b[0][0]+b[1][0])/2, (b[0][1]+b[1][1])/2];
+    const [sx, sy] = T.apply(c);
+    if (sx < 0 || sx > W || sy < 0 || sy > H || t.d.span * T.k < 8) zoomToPoint(c, Math.max(T.k / k0, Math.min(6, 40 / (t.d.span || 1))));
+  }
+  say('Look for the flashing spot!');
+}
+$('#playBtn').onclick = startGame;
+$('#gStop').onclick = () => { game.on = false; $('#game').hidden = true; $('#toast').hidden = true; };
+$('#gSkip').onclick = () => { toast(`It was ${nameOf(game.target)}!`); hint(); setTimeout(nextTarget, 1800); };
+$('#gHint').onclick = hint;
+document.querySelectorAll('.modes button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.modes button').forEach(x => x.setAttribute('aria-pressed', x === b));
+  game.mode = b.dataset.mode; startGame();
+});
+
+/* ---------------- CONFETTI ---------------- */
+const cv = $('#confetti'), cx = cv.getContext('2d');
+let parts = [], confettiRaf = 0;
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function confetti(n){
+  const dpr = devicePixelRatio || 1;
+  cv.width = innerWidth * dpr; cv.height = innerHeight * dpr; cx.setTransform(dpr,0,0,dpr,0,0);
+  if (reduced) n = Math.min(n, 30);
+  const cols = ['#f5b3c7','#fbd98a','#a9d6f0','#b5e2bb','#cbbcf0','#f9c2a8'];
+  for (let i = 0; i < n; i++) parts.push({x:innerWidth/2 + (Math.random()-.5)*120, y:innerHeight*.35, vx:(Math.random()-.5)*14, vy:-Math.random()*13-4,
+    r:Math.random()*Math.PI, vr:(Math.random()-.5)*.4, s:6+Math.random()*7, c:cols[i % cols.length], life:0});
+  if (!confettiRaf) tick();
+}
+function tick(){
+  cx.clearRect(0, 0, innerWidth, innerHeight);
+  parts = parts.filter(p => p.y < innerHeight + 20 && p.life < 240);
+  for (const p of parts){
+    p.vy += .32; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.r += p.vr; p.life++;
+    cx.save(); cx.translate(p.x, p.y); cx.rotate(p.r); cx.fillStyle = p.c; cx.fillRect(-p.s/2, -p.s/4, p.s, p.s/2); cx.restore();
+  }
+  confettiRaf = parts.length ? requestAnimationFrame(tick) : 0;
+  if (!parts.length) cx.clearRect(0, 0, innerWidth, innerHeight);
+}
+
+load().catch(err => { $('#loading').textContent = 'The map could not load. Check the internet connection and refresh.'; console.error(err); });
+</script>
