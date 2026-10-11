@@ -31,8 +31,12 @@
 html,body{height:100%;margin:0;overflow:hidden;background:var(--mist)}
 body{font-family:var(--body);color:var(--ink);-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;overscroll-behavior:none;-webkit-touch-callout:none;-webkit-font-smoothing:antialiased}
 #app{position:fixed;inset:0}
-#map{width:100%;height:100%;display:block;touch-action:none;cursor:grab}
-#map:active{cursor:grabbing}
+body{transition:background-color .5s}
+body[data-view="space"]{background:#0c0a26}
+#galaxy{position:absolute;inset:0;width:100%;height:100%;display:none}
+body[data-view="space"] #galaxy{display:block}
+.view{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+.view:active{cursor:grabbing}
 button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 button:focus-visible{outline:2px solid var(--rose-ink);outline-offset:3px}
 .disp{font-family:var(--display);font-variation-settings:"SOFT" 100,"opsz" 72}
@@ -49,11 +53,15 @@ button:focus-visible{outline:2px solid var(--rose-ink);outline-offset:3px}
 /* top bar */
 .top{position:absolute;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top,0px) + 14px) var(--gut) 0;display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;pointer-events:none}
 .top>*{pointer-events:auto}
-.brand{display:flex;align-items:center;gap:12px;padding:9px 20px 9px 10px;border-radius:999px}
+.brand{display:flex;align-items:center;gap:12px;padding:6px 6px 6px 10px;border-radius:999px;flex-wrap:wrap}
 .brand svg{width:36px;height:36px;flex:none}
 .brand h1{margin:0;font-family:var(--display);font-variation-settings:"SOFT" 100,"opsz" 72;font-weight:600;font-size:25px;line-height:1;letter-spacing:-.01em}
 .brand h1 em{color:var(--rose-ink);font-weight:500}
-.right{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+.tabs{display:flex;gap:2px;margin-left:6px;padding:3px;border-radius:999px;background:#eef2f6}
+.tabs button{display:inline-flex;align-items:center;gap:7px;border:0;background:transparent;border-radius:999px;padding:7px 14px 7px 10px;font-weight:650;font-size:14.5px;color:var(--muted);cursor:pointer;min-height:38px;transition:background .15s,color .15s}
+.tabs button[aria-selected="true"]{background:var(--paper);color:var(--ink);box-shadow:0 1px 5px rgba(54,64,90,.16)}
+.tabs svg{width:20px;height:20px;flex:none}
+.right{margin-left:auto;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
 .layers{display:flex;gap:4px;flex-wrap:wrap;padding:5px;border-radius:999px}
 .chip{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:999px;padding:7px 14px 7px 9px;background:transparent;font-weight:600;font-size:14.5px;color:var(--muted);cursor:pointer;min-height:40px;transition:background .18s,color .18s}
 .chip[aria-pressed="true"]{background:var(--chipbg);color:var(--ink)}
@@ -92,6 +100,7 @@ button:focus-visible{outline:2px solid var(--rose-ink);outline-offset:3px}
 .modes button[aria-pressed="true"]{background:var(--paper);color:var(--ink);box-shadow:0 1px 4px rgba(54,64,90,.15)}
 .ask{font-family:var(--display);font-variation-settings:"SOFT" 100,"opsz" 72;font-weight:600;font-size:30px;letter-spacing:-.01em;margin:12px 0;line-height:1.15;text-wrap:balance}
 .ask .gflag{font-size:30px;vertical-align:-3px;margin-right:8px}
+.ask .gflag svg{width:36px;height:36px;vertical-align:-10px}
 .ask b{font-weight:600;font-style:italic;color:var(--rose-ink)}
 .gbar{display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap}
 .stars{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:18px;padding:0 16px;min-height:46px;border-radius:999px;background:var(--butter);font-variant-numeric:tabular-nums}
@@ -126,9 +135,28 @@ button:focus-visible{outline:2px solid var(--rose-ink);outline-offset:3px}
 
 .tip{position:absolute;pointer-events:none;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,.95);box-shadow:var(--shadow);color:var(--ink);font-weight:600;font-size:15px;white-space:nowrap;transform:translate(-50%,-150%)}
 @media (hover:hover){.country:hover,.state:hover{filter:saturate(1.35) brightness(1.02)}}
+.lbl.usa-l text{fill:#4c5671;font-weight:650}
+.lbl.cap-l path{fill:#f2a3ba;stroke:#fff;stroke-width:1.5}
+.lbl.cap-l text{font-weight:600;fill:#5a6178}
+.lbl.dc-l path{fill:#f08aa8}
+.lbl.space-l text{fill:#f1edff;stroke:rgba(12,10,38,.85);stroke-width:3.5px;font-weight:600}
+.lbl.belt-l text{font-family:var(--display);font-variation-settings:"SOFT" 100,"opsz" 18;font-style:italic;font-weight:500;fill:#d8cdfa;stroke:rgba(12,10,38,.7)}
+.orbit{fill:none;stroke:#cdbfff;stroke-opacity:.22;stroke-width:1;vector-effect:non-scaling-stroke;pointer-events:none}
+.orbit.comet{stroke:#a9d4ff;stroke-dasharray:3 6;stroke-opacity:.28}
+.moon-orbit{stroke-opacity:.1}
+.body{cursor:pointer}
+.sel-ring{fill:none;stroke:#f5c6d6;stroke-width:2;vector-effect:non-scaling-stroke;pointer-events:none}
+.tail{pointer-events:none}
+.bgstar{fill:#fff}
+.twinkle{animation:tw 3.2s ease-in-out infinite}
+@keyframes tw{50%{opacity:.15}}
+.sun-glow{animation:glow 5s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes glow{50%{opacity:.7;transform:scale(1.08)}}
+body[data-view="space"] .ripple{stroke:#cfc8f3}
 #confetti{position:absolute;inset:0;pointer-events:none;width:100%;height:100%}
 
 @media (max-width:700px){
+  .tabs button{padding:6px 10px 6px 8px;font-size:13.5px}
   .brand h1{font-size:21px}
   .chip{font-size:13px;padding:6px 11px 6px 8px}
   .ask{font-size:24px}
@@ -136,13 +164,12 @@ button:focus-visible{outline:2px solid var(--rose-ink);outline-offset:3px}
   .flag{font-size:38px;width:60px;height:60px}
 }
 @media (prefers-reduced-motion:reduce){
-  .card,.toast{animation:none}
+  .card,.toast,.twinkle,.sun-glow{animation:none}
   .hint{animation-iteration-count:2}
 }
 </style>
 
 <div id="app">
-  <svg id="map" role="img" aria-label="Interactive world map"></svg>
   <canvas id="confetti"></canvas>
   <div class="loading" id="loading">Unrolling the map…</div>
 
@@ -150,15 +177,14 @@ button:focus-visible{outline:2px solid var(--rose-ink);outline-offset:3px}
     <div class="brand panel">
       <svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="#c6e3f2"/><path d="M8 15c4-3 7 0 9-2s5-3 7 0-1 6 2 8 6 1 5 5-5 6-8 5-3-4-6-4-6 3-8 0-1-6-1-8 0-3 0-4z" fill="#c5e8c8"/><path d="M27 9c2 0 4 1 4 3s-2 2-3 1-2-4-1-4z" fill="#fbdcae"/><circle cx="30" cy="27" r="2.5" fill="#f5c6d6"/></svg>
       <h1>Peeka<em>world</em></h1>
+      <nav class="tabs" role="tablist" aria-label="Maps">
+        <button role="tab" data-view="world" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="#c6e3f2"/><path d="M6 9c2-1.5 3.5 0 4.5-1s2.5-1.5 3.5 0-.5 3 1 4 3 .5 2.5 2.5-2.5 3-4 2.5-1.5-2-3-2-3 1.5-4 0-.5-3-.5-4z" fill="#c5e8c8"/><circle cx="12" cy="12" r="8.5" fill="none" stroke="#36405a" stroke-width="1.5"/></svg>World</button>
+        <button role="tab" data-view="usa" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="2.5" fill="#fff" stroke="#36405a" stroke-width="1.5"/><path d="M3.8 9.5h16.4M3.8 13h16.4M3.8 16.3h16.4" stroke="#f2a3ba" stroke-width="1.6"/><rect x="3.8" y="6.3" width="7.4" height="6" rx="1" fill="#a9d0ec"/></svg>USA</button>
+        <button role="tab" data-view="space" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5.5" fill="#f7e4b0" stroke="#36405a" stroke-width="1.5"/><ellipse cx="12" cy="12" rx="10" ry="3.3" fill="none" stroke="#36405a" stroke-width="1.5" transform="rotate(-18 12 12)"/></svg>Space</button>
+      </nav>
     </div>
     <div class="right">
       <div class="layers panel" role="group" aria-label="Map layers">
-        <button class="chip" id="l-oceans" aria-pressed="true" style="--dot:#8cc3e2;--chipbg:#e3f1f9"><i></i>Oceans</button>
-        <button class="chip" id="l-continents" aria-pressed="true" style="--dot:#f2c27e;--chipbg:#fdf0dc"><i></i>Continents</button>
-        <button class="chip" id="l-countries" aria-pressed="true" style="--dot:#b9a8e6;--chipbg:#efeafb"><i></i>Countries</button>
-        <button class="chip" id="l-states" aria-pressed="true" style="--dot:#93d09b;--chipbg:#e6f5e8"><i></i>US States</button>
-        <button class="chip" id="l-cities" aria-pressed="true" style="--dot:#ebc34f;--chipbg:#fdf4d6"><i></i>Cities</button>
-        <button class="chip" id="l-sound" aria-pressed="true" style="--dot:#ea9ab1;--chipbg:#fce6ed"><i></i>Talking</button>
       </div>
       <button class="btn butter" id="playBtn">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.6 6.1.6-4.6 4.1 1.3 6L12 16.3l-5.4 3 1.3-6-4.6-4.1 6.1-.6z" fill="#fff" stroke="#36405a" stroke-width="1.6" stroke-linejoin="round"/></svg>
@@ -176,9 +202,6 @@ button:focus-visible{outline:2px solid var(--rose-ink);outline-offset:3px}
 
   <div class="game panel" id="game" hidden>
     <div class="modes" role="group" aria-label="Game level">
-      <button data-mode="easy" aria-pressed="true">Easy</button>
-      <button data-mode="hard" aria-pressed="false">All countries</button>
-      <button data-mode="states" aria-pressed="false">US States</button>
     </div>
     <div class="ask" id="ask"></div>
     <div class="gbar">
@@ -653,44 +676,100 @@ const CITIES = [
  ['Agra',78.01,27.18,3,0,'India','The Taj Mahal, a giant white marble building, is here.']
 ];
 
-/* ---------------- STATE ---------------- */
+/* ---------------- STATE CAPITAL LOCATIONS ---------------- */
+const CAP_LL = {
+  'Alabama':[-86.30,32.38],'Alaska':[-134.42,58.30],'Arizona':[-112.07,33.45],'Arkansas':[-92.29,34.75],'California':[-121.49,38.58],
+  'Colorado':[-104.99,39.74],'Connecticut':[-72.68,41.76],'Delaware':[-75.52,39.16],'Florida':[-84.28,30.44],'Georgia':[-84.39,33.75],
+  'Hawaii':[-157.86,21.31],'Idaho':[-116.20,43.62],'Illinois':[-89.65,39.80],'Indiana':[-86.16,39.77],'Iowa':[-93.61,41.59],
+  'Kansas':[-95.68,39.05],'Kentucky':[-84.87,38.20],'Louisiana':[-91.15,30.45],'Maine':[-69.78,44.31],'Maryland':[-76.49,38.98],
+  'Massachusetts':[-71.06,42.36],'Michigan':[-84.56,42.73],'Minnesota':[-93.09,44.95],'Mississippi':[-90.18,32.30],'Missouri':[-92.17,38.58],
+  'Montana':[-112.04,46.59],'Nebraska':[-96.70,40.81],'Nevada':[-119.77,39.16],'New Hampshire':[-71.54,43.21],'New Jersey':[-74.76,40.22],
+  'New Mexico':[-105.94,35.69],'New York':[-73.76,42.65],'North Carolina':[-78.64,35.78],'North Dakota':[-100.78,46.81],'Ohio':[-82.99,39.96],
+  'Oklahoma':[-97.52,35.47],'Oregon':[-123.04,44.94],'Pennsylvania':[-76.88,40.27],'Rhode Island':[-71.41,41.82],'South Carolina':[-81.03,34.00],
+  'South Dakota':[-100.35,44.37],'Tennessee':[-86.78,36.16],'Texas':[-97.74,30.27],'Utah':[-111.89,40.76],'Vermont':[-72.58,44.26],
+  'Virginia':[-77.44,37.54],'Washington':[-122.90,47.04],'West Virginia':[-81.63,38.35],'Wisconsin':[-89.40,43.07],'Wyoming':[-104.82,41.14]
+};
+
+/* ---------------- SOLAR SYSTEM ----------------
+   We look down at the orbit plane at a slant, so circular orbits show up as tilted ellipses.
+   Distances and sizes are squished so everything fits; planet speeds keep their real ratios. */
+const YEAR_S = 40;                                              // seconds for Earth to go once around the Sun
+const SP = {W:820, H:400, cx:410, cy:200, tilt:.38, rot:-14};   // starts framed around Uranus; zoom out for Neptune and beyond  // space size, Sun position, slant
+const BODIES = [
+  {id:'sun', name:'Sun', the:true, kind:'Star', r:40, color:'#ffc04d', orbit:0, z:2.2,
+    rows:[['Size','109 Earths wide'],['Age','About 4.6 billion years'],['Surface','About 5,500 °C']],
+    fact:'The Sun is so big that about 1.3 million Earths could fit inside it.'},
+  {id:'mercury', name:'Mercury', kind:'Planet', r:5.5, color:'#a9a39d', deco:'craters', orbit:66, period:0.241, phase:.1, z:16,
+    rows:[['From the Sun','58 million km'],['Size','0.4 Earths wide'],['Moons','0'],['One spin','59 Earth days'],['One year','88 Earth days']],
+    fact:'The smallest planet and the closest to the Sun. It has almost no air, so its nights are freezing cold.'},
+  {id:'venus', name:'Venus', kind:'Planet', r:9, color:'#e8cf9b', deco:'venus', orbit:90, period:0.615, phase:.55, z:12,
+    rows:[['From the Sun','108 million km'],['Size','0.95 Earths wide'],['Moons','0'],['One spin','243 Earth days'],['One year','225 Earth days']],
+    fact:'The hottest planet, even hotter than Mercury, because thick clouds trap the heat. It also spins backwards!'},
+  {id:'earth', name:'Earth', kind:'Planet', r:9.5, color:'#3d8bd6', deco:'earth', orbit:120, period:1, phase:.3, z:12,
+    rows:[['From the Sun','150 million km'],['Size','12,700 km wide'],['Moons','1'],['One spin','24 hours'],['One year','365 days']],
+    fact:'Our home! The only planet we know of with life. About 71% of it is covered in water.'},
+  {id:'moon', name:'Moon', the:true, kind:'Moon', parent:'earth', r:2.3, color:'#cfcdc8', deco:'craters', orbit:17, vperiod:12, z:18,
+    rows:[['Goes around','Earth'],['From Earth','384,400 km'],['Size','0.27 Earths wide'],['One trip around','27 days']],
+    fact:'Twelve astronauts have walked on the Moon. Their footprints are still there because there is no wind to blow them away.'},
+  {id:'mars', name:'Mars', kind:'Planet', r:7.5, color:'#c8603d', deco:'mars', orbit:154, period:1.881, phase:.8, z:14,
+    rows:[['From the Sun','228 million km'],['Size','0.5 Earths wide'],['Moons','2'],['One spin','24 hours 37 minutes'],['One year','687 Earth days']],
+    fact:'The Red Planet gets its color from rusty dust. Olympus Mons, the biggest volcano in the solar system, is here.'},
+  {id:'vesta', name:'Vesta', kind:'Asteroid', r:2, color:'#a59d94', orbit:182, period:3.63, phase:.35, z:18,
+    rows:[['Lives in','The asteroid belt'],['From the Sun','353 million km'],['Size','525 km wide'],['One year','3.6 Earth years']],
+    fact:'One of the brightest asteroids. On a very dark night you can sometimes see it without a telescope.'},
+  {id:'ceres', name:'Ceres', label:'Ceres (dwarf planet)', kind:'Dwarf planet', r:2.6, color:'#8f8a85', orbit:198, period:4.6, phase:.62, z:18,
+    rows:[['Lives in','The asteroid belt'],['From the Sun','414 million km'],['Size','940 km wide'],['One year','4.6 Earth years']],
+    fact:'The biggest thing in the asteroid belt. Scientists think it may hide salty water under its surface.'},
+  {id:'jupiter', name:'Jupiter', kind:'Planet', r:23, color:'#d6ae86', deco:'jupiter', orbit:250, period:11.86, phase:.15, z:6,
+    rows:[['From the Sun','778 million km'],['Size','11 Earths wide'],['Moons','About 95'],['One spin','10 hours'],['One year','12 Earth years']],
+    fact:'The biggest planet. Its Great Red Spot is a storm bigger than Earth that has been swirling for hundreds of years.'},
+  {id:'io', name:'Io', kind:'Moon', parent:'jupiter', r:2, color:'#e6cf63', orbit:31, vperiod:4, z:20,
+    rows:[['Goes around','Jupiter']], fact:'The most volcanic place in the solar system. It has more than 400 active volcanoes.'},
+  {id:'europa', name:'Europa', kind:'Moon', parent:'jupiter', r:1.8, color:'#d9cdbb', orbit:36, vperiod:5.5, z:20,
+    rows:[['Goes around','Jupiter']], fact:'Under its icy shell is a giant ocean with more water than all of Earth\'s oceans.'},
+  {id:'ganymede', name:'Ganymede', kind:'Moon', parent:'jupiter', r:2.6, color:'#9d8f82', orbit:42, vperiod:7, z:20,
+    rows:[['Goes around','Jupiter']], fact:'The biggest moon in the solar system. It is even bigger than the planet Mercury.'},
+  {id:'callisto', name:'Callisto', kind:'Moon', parent:'jupiter', r:2.4, color:'#6f6761', deco:'craters', orbit:49, vperiod:10, z:20,
+    rows:[['Goes around','Jupiter']], fact:'One of the most cratered places in the solar system, covered in old dents from space rocks.'},
+  {id:'saturn', name:'Saturn', kind:'Planet', r:19, color:'#e2c68c', deco:'saturn', orbit:330, period:29.46, phase:.62, z:6, rings:true,
+    rows:[['From the Sun','1.4 billion km'],['Size','9 Earths wide'],['Moons','More than 270'],['One spin','11 hours'],['One year','29 Earth years']],
+    fact:'Its beautiful rings are made of ice and rock. Saturn is so light that it would float in a giant bathtub!'},
+  {id:'titan', name:'Titan', kind:'Moon', parent:'saturn', r:2.7, color:'#d4964a', orbit:52, vperiod:10, z:18,
+    rows:[['Goes around','Saturn']], fact:'The only moon with thick air. It has lakes, but they are full of liquid methane instead of water.'},
+  {id:'uranus', name:'Uranus', kind:'Planet', r:13, color:'#9fdfe5', orbit:400, period:84, phase:.9, z:9, tiltRing:true,
+    rows:[['From the Sun','2.9 billion km'],['Size','4 Earths wide'],['Moons','28'],['One spin','17 hours'],['One year','84 Earth years']],
+    fact:'It spins on its side, like a ball rolling around the Sun.'},
+  {id:'neptune', name:'Neptune', kind:'Planet', r:13, color:'#3f64d2', deco:'neptune', orbit:460, period:164.8, phase:.4, z:9,
+    rows:[['From the Sun','4.5 billion km'],['Size','3.9 Earths wide'],['Moons','16'],['One spin','16 hours'],['One year','165 Earth years']],
+    fact:'The windiest planet. Its winds blow faster than the speed of sound.'},
+  {id:'pluto', name:'Pluto', label:'Pluto (dwarf planet)', kind:'Dwarf planet', r:3.8, color:'#d6b59a', deco:'pluto', orbit:512, period:248, phase:.72, z:14,
+    rows:[['Lives in','The Kuiper Belt'],['From the Sun','5.9 billion km'],['Size','0.2 Earths wide'],['Moons','5'],['One year','248 Earth years']],
+    fact:'Pluto used to be called the ninth planet. Now it is a dwarf planet, and it has a giant heart-shaped plain made of ice.'},
+  {id:'halley', name:"Halley's Comet", kind:'Comet', r:2.6, color:'#eaf6ff', comet:{q:74, Q:500, tilt:2.1}, period:76, phase:.03, z:14,
+    rows:[['Comes back every','76 years'],['Next visit','2061'],['Made of','Ice, dust and rock']],
+    fact:'A comet is like a giant dirty snowball. When it swoops close to the Sun, it grows a long glowing tail.'},
+  {id:'encke', name:'Comet Encke', kind:'Comet', r:2, color:'#eaf6ff', comet:{q:52, Q:218, tilt:-.7}, period:3.3, phase:.45, z:16,
+    rows:[['Comes back every','3.3 years'],['Made of','Ice, dust and rock']],
+    fact:'It zooms around the Sun every 3.3 years, faster than any other big comet we know.'},
+  {id:'asteroids', name:'Asteroid Belt', the:true, kind:'Belt', belt:true, flat:[0, -214], z:2.4,
+    rows:[['Where','Between Mars and Jupiter']], fact:'Millions of rocky asteroids circle the Sun here. Most are smaller than a city.'},
+  {id:'kuiper', name:'Kuiper Belt', the:true, kind:'Belt', belt:true, flat:[0, 548], z:1.3,
+    rows:[['Where','Past Neptune']], fact:'A huge ring of icy objects far past Neptune. Pluto lives out here.'}
+];
+const BODY = Object.fromEntries(BODIES.map(b => [b.id, b]));
+
+/* ---------------- CORE ---------------- */
 const $ = s => document.querySelector(s);
-const layers = {oceans:true, continents:true, countries:true, states:true, cities:true, sound:true};
-let W = innerWidth, H = innerHeight, k0 = 1, T = d3.zoomIdentity;
-let selected = null, current = null;
-
-const svg = d3.select('#map');
-const BW = 1000;
+const settings = {sound:true};
+const views = {};
+let active = null, current = null, W = innerWidth, H = innerHeight;
+const tip = $('#tip');
 const sphere = {type:'Sphere'};
-const projection = d3.geoNaturalEarth1().fitWidth(BW, sphere);
-const path = d3.geoPath(projection);
-const BH = path.bounds(sphere)[1][1];
 
-const defs = svg.append('defs');
-const wave = defs.append('pattern').attr('id','waves').attr('width',24).attr('height',12).attr('patternUnits','userSpaceOnUse');
-wave.append('path').attr('d','M0 8 q3 -3 6 0 t6 0').attr('fill','none').attr('stroke','#fff').attr('stroke-opacity',.55).attr('stroke-width',.6);
-
-const root = svg.append('g');
-const gOcean = root.append('g');
-const gCountries = root.append('g');
-const gStates = root.append('g');
-const gFx = root.append('g');
-const gLabels = svg.append('g');      // screen space
-const gScreenFx = svg.append('g');
-
-const zoom = d3.zoom()
-  .scaleExtent([0.5, 60])
-  .clickDistance(10).tapDistance(14)
-  .on('zoom', e => { T = e.transform; root.attr('transform', T); scheduleLabels(); });
-svg.call(zoom);
-svg.on('dblclick.zoom', onDoubleTap);   // d3 also routes touch double-taps here
-document.addEventListener('gesturestart', e => e.preventDefault());
-
-/* ---------------- HELPERS ---------------- */
 function hash(s){ let h = 0; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h); }
 function shade(hex, s){ const c = d3.hsl(hex); c.l = Math.max(.7, Math.min(.94, c.l + ((hash(s) % 5) - 2) * .025)); return c.formatHex(); }
 const RAINBOW = ['#f9cdbb','#fbdcae','#f6e9a3','#c5e8c8','#bfe3ec','#cfd8f6','#d8cdf2','#f5c6d6','#c9ecdf','#fde3c4'];
-function largestPart(f){
+function largestPart(f, path){
   if (f.geometry.type !== 'MultiPolygon') return f;
   let best = null, ba = -1;
   for (const coords of f.geometry.coordinates){
@@ -700,19 +779,163 @@ function largestPart(f){
   return best;
 }
 function say(text){
-  if (!layers.sound || !('speechSynthesis' in window)) return;
+  if (!settings.sound || !('speechSynthesis' in window)) return;
   try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.rate = .92; u.pitch = 1.15; speechSynthesis.speak(u); } catch(e){}
-}
-function screenPt(lonlat){ return T.apply(projection(lonlat)); }
-function ripple(x, y){
-  gScreenFx.append('circle').attr('class','ripple').attr('cx',x).attr('cy',y).attr('r',6).attr('stroke-opacity',1)
-    .transition().duration(550).attr('r',44).attr('stroke-opacity',0).remove();
 }
 let toastTimer;
 function toast(msg){
   const t = $('#toast'); t.textContent = msg; t.hidden = false;
   t.style.animation = 'none'; void t.offsetWidth; t.style.animation = '';
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.hidden = true, 2200);
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.hidden = true, 2400);
+}
+
+/* ---------------- VIEWS ---------------- */
+function makeView(id, opts){
+  const svg = d3.select('#app').insert('svg', '#confetti').attr('class','view').attr('id','v-' + id).attr('hidden','')
+    .attr('role','img').attr('aria-label', opts.label);
+  const v = Object.assign({id, svg, T:d3.zoomIdentity, k0:1, labels:[], history:[], layers:{}, layerDefs:[], maxZ:60, dirty:true}, opts);
+  v.defs = svg.append('defs');
+  v.bg = svg.append('g');
+  v.root = svg.append('g');
+  v.gLabels = svg.append('g');
+  v.gFx = svg.append('g');
+  v.zoom = d3.zoom().clickDistance(10).tapDistance(14)
+    .on('zoom', e => { v.T = e.transform; v.root.attr('transform', v.T); scheduleLabels(v); });
+  svg.call(v.zoom).on('dblclick.zoom', e => onDoubleTap(v, e));
+  svg.on('click', e => { const it = itemFrom(e.target, e, v); if (it) select(it, e); });
+  svg.on('pointermove', e => hover(v, e)).on('pointerleave', () => tip.hidden = true).on('pointerdown.tip', () => tip.hidden = true);
+  views[id] = v;
+  return v;
+}
+function itemFrom(el, e, v){
+  for (; el && el !== v.svg.node(); el = el.parentNode){
+    if (el.__item) return typeof el.__item === 'function' ? el.__item(e) : el.__item;
+  }
+  return null;
+}
+function homeT(v){
+  const top = v.padTop ? $('.top').getBoundingClientRect().bottom + 8 : 0;
+  const side = v.padSide ?? (v.padTop ? 76 : 0);
+  const aw = W - side * 2, ah = H - top - (v.padTop ? 16 : 0);
+  let k = Math.min(aw / v.BW, ah / v.BH);
+  if (v.id === 'world') k = Math.max(Math.min(W / v.BW, H / v.BH), Math.min(W / v.BW, (H * .9) / v.BH));
+  return d3.zoomIdentity.translate((W - v.BW * k) / 2, top + (ah - v.BH * k) / 2 + (v.id === 'world' ? 10 : 0)).scale(k);
+}
+function resize(v, first){
+  const h = homeT(v); v.k0 = h.k;
+  v.zoom.scaleExtent([v.k0 * (v.minZ || .8), v.k0 * v.maxZ]).translateExtent([[-v.BW * .4, -v.BH * .5], [v.BW * 1.4, v.BH * 1.5]]).extent([[0,0],[W,H]]);
+  if (first) v.svg.call(v.zoom.transform, h); else v.svg.transition().duration(300).call(v.zoom.transform, h);
+  if (v.onResize) v.onResize();
+  v.dirty = false;
+  measure(v);
+}
+addEventListener('resize', () => { clearTimeout(resize.t); resize.t = setTimeout(() => {
+  W = innerWidth; H = innerHeight;
+  Object.values(views).forEach(v => v.dirty = true);
+  if (active) resize(active, false);
+  if (game.on) placeGame();
+}, 150); });
+
+function zoomToBounds(v, b, maxZ = 14){
+  if (!b || !isFinite(b[0][0])) return;
+  const dx = b[1][0] - b[0][0], dy = b[1][1] - b[0][1];
+  const cx = (b[0][0] + b[1][0]) / 2, cy = (b[0][1] + b[1][1]) / 2;
+  const k = Math.min(v.k0 * maxZ, Math.max(v.k0, .6 / Math.max(dx / W, dy / H)));
+  v.svg.transition().duration(900).ease(d3.easeCubicInOut)
+    .call(v.zoom.transform, d3.zoomIdentity.translate(W/2, H/2).scale(k).translate(-cx, -cy));
+}
+function zoomToPoint(v, p, z){
+  if (!p) return;
+  v.svg.transition().duration(900).ease(d3.easeCubicInOut)
+    .call(v.zoom.transform, d3.zoomIdentity.translate(W/2, H/2).scale(v.k0 * Math.min(z, v.maxZ)).translate(-p[0], -p[1]));
+}
+
+/* view history, so Back returns to where you were */
+function pushView(v){ v.history.push(v.T); if (v.history.length > 30) v.history.shift(); updateBack(); }
+function updateBack(){ $('#zback').hidden = !(active && active.history.length); }
+function goBack(){
+  const v = active, t = v.history.pop(); updateBack();
+  v.svg.transition().duration(700).ease(d3.easeCubicInOut).call(v.zoom.transform, t || homeT(v));
+}
+$('#zback').onclick = goBack;
+$('#zin').onclick = () => active.svg.transition().duration(300).call(active.zoom.scaleBy, 1.8);
+$('#zout').onclick = () => active.svg.transition().duration(300).call(active.zoom.scaleBy, 1/1.8);
+$('#zhome').onclick = () => { if (active.T.k / active.k0 > 1.05) pushView(active); active.svg.transition().duration(700).call(active.zoom.transform, homeT(active)); };
+addEventListener('keydown', e => {
+  if (!active) return;
+  if (e.key === 'Escape' || e.key === 'Backspace'){ if (active.history.length){ e.preventDefault(); goBack(); } }
+  if (e.key === '+' || e.key === '=') $('#zin').onclick();
+  if (e.key === '-') $('#zout').onclick();
+});
+addEventListener('mouseup', e => { if (e.button === 3 && active){ e.preventDefault(); goBack(); } });  // mouse "back" side button
+
+let lastDbl = 0;
+function onDoubleTap(v, e){
+  const now = Date.now(); if (now - lastDbl < 450) return; lastDbl = now;
+  if (e.cancelable) e.preventDefault();
+  const pt = e.changedTouches ? e.changedTouches[0] : e;
+  const el = document.elementFromPoint(pt.clientX, pt.clientY);
+  const it = el && v.svg.node().contains(el) ? itemFrom(el, pt, v) : null;
+  pushView(v);
+  if (it){ focusItem(v, it); return; }
+  const [mx, my] = d3.pointer(pt, v.svg.node());
+  zoomToPoint(v, v.T.invert([mx, my]), v.T.k / v.k0 * 2.2);
+}
+function focusItem(v, it){
+  if (v.onFocus) v.onFocus(it);
+  const i = describe(it);
+  i.bounds ? zoomToBounds(v, i.bounds) : zoomToPoint(v, i.point, Math.max(i.z, v.T.k / v.k0 * 1.5));
+}
+
+/* ---------------- LABELS ---------------- */
+function addLabel(v, o){
+  const g = v.gLabels.append('g').attr('class','lbl ' + o.cls + (o.item ? ' tap' : ''));
+  if (o.marker) o.marker(g);
+  const t = g.append('text').text(o.text).attr('font-size', o.size).attr('dy','.35em');
+  if (o.dx) t.attr('x', o.dx).attr('text-anchor','start'); else t.attr('text-anchor','middle');
+  if (o.item) g.node().__item = o.item;
+  o.g = g; o.t = t; o.w = o.text.length * o.size * .58; o.h = o.size * 1.2;
+  v.labels.push(o);
+  return o;
+}
+function measure(v){
+  for (const o of v.labels){
+    o.g.style('display', null); o.vis = undefined;
+    try { const w = o.t.node().getComputedTextLength(); if (w) o.w = w; } catch(e){}
+  }
+  updateLabels(v);
+}
+function scheduleLabels(v){ if (!v.raf) v.raf = requestAnimationFrame(() => { v.raf = 0; updateLabels(v); }); }
+function updateLabels(v){
+  if (v !== active) return;
+  const z = v.T.k / v.k0, placed = [];
+  const hit = b => placed.some(p => b[0] < p[2] && b[2] > p[0] && b[1] < p[3] && b[3] > p[1]);
+  for (const o of v.labels){
+    let show = (!o.layer || v.layers[o.layer]) && z >= (o.minZ || 0) && z < (o.maxZ || 1e9);
+    if (show && o.span && o.w > o.span * v.T.k * 1.25 && !(o.forceZ && z >= o.forceZ)) show = false;
+    let x, y;
+    if (show){
+      const p = o.pf ? o.pf() : o.p;
+      if (!p) show = false;
+      else { [x, y] = v.T.apply(p); if (o.dyf) y += o.dyf(v.T.k); if (x < -150 || x > W + 150 || y < -40 || y > H + 40) show = false; }
+    }
+    if (!show){ if (o.vis !== false){ o.g.style('display','none'); o.vis = false; } continue; }
+    let showText = true;
+    const b = o.dx ? [x + o.dx - 2, y - o.h/2, x + o.dx + o.w + 2, y + o.h/2] : [x - o.w/2 - 2, y - o.h/2, x + o.w/2 + 2, y + o.h/2];
+    if (hit(b)){ if (!o.marker){ if (o.vis !== false){ o.g.style('display','none'); o.vis = false; } continue; } showText = false; }
+    else placed.push(b);
+    if (o.vis !== true){ o.g.style('display', null); o.vis = true; }
+    o.g.attr('transform', `translate(${x.toFixed(1)},${y.toFixed(1)})`);
+    o.t.style('display', showText ? null : 'none');
+  }
+}
+
+/* ---------------- HOVER (mouse) ---------------- */
+function hover(v, e){
+  if (e.pointerType !== 'mouse' || e.buttons){ tip.hidden = true; return; }
+  const it = itemFrom(e.target, e, v);
+  if (!it){ tip.hidden = true; return; }
+  tip.textContent = nameOf(it); tip.hidden = false; tip.style.left = e.clientX + 'px'; tip.style.top = e.clientY + 'px';
 }
 
 /* ---------------- OCEAN LOOKUP ---------------- */
@@ -732,372 +955,651 @@ function oceanAt(lon, lat){
   return 'pacific';
 }
 
-/* ---------------- LABELS ---------------- */
-const labelItems = [];
-function addLabel(o){
-  const g = gLabels.append('g').attr('class','lbl ' + o.cls + (o.onTap ? ' tap' : ''));
-  if (o.marker) o.marker(g);
-  const t = g.append('text').text(o.text).attr('font-size', o.size).attr('dy','.35em');
-  if (o.dx){ t.attr('x', o.dx).attr('text-anchor','start'); } else t.attr('text-anchor','middle');
-  if (o.onTap) g.on('click', e => { e.stopPropagation(); o.onTap(e); });
-  if (o.item) g.node().__label = o;
-  o.g = g; o.t = t; o.w = o.text.length * o.size * .58; o.h = o.size * 1.2;
-  labelItems.push(o);
-  return o;
-}
-function measureLabels(){
-  for (const o of labelItems){
-    o.g.style('display', null); o.vis = undefined;
-    try { const w = o.t.node().getComputedTextLength(); if (w) o.w = w; } catch(e){}
-  }
-  updateLabels();
-}
-let raf = 0;
-function scheduleLabels(){ if (!raf) raf = requestAnimationFrame(() => { raf = 0; updateLabels(); }); }
-function updateLabels(){
-  const z = T.k / k0, placed = [];
-  const hit = b => placed.some(p => b[0] < p[2] && b[2] > p[0] && b[1] < p[3] && b[3] > p[1]);
-  for (const o of labelItems){
-    let show = layers[o.layer] && z >= (o.minZ || 0) && z < (o.maxZ || 1e9);
-    if (show && o.span && o.w > o.span * T.k * 1.25 && !(o.forceZ && z >= o.forceZ)) show = false;
-    if (show && o.hideWhen && o.hideWhen(z)) show = false;
-    let x, y;
-    if (show){ [x, y] = T.apply(o.p); if (x < -150 || x > W + 150 || y < -40 || y > H + 40) show = false; }
-    if (!show){ if (o.vis !== false){ o.g.style('display','none'); o.vis = false; } continue; }
-    let showText = true;
-    const b = o.dx ? [x + o.dx - 2, y - o.h/2, x + o.dx + o.w + 2, y + o.h/2] : [x - o.w/2 - 2, y - o.h/2, x + o.w/2 + 2, y + o.h/2];
-    if (hit(b)){ if (!o.marker) { if (o.vis !== false){ o.g.style('display','none'); o.vis = false; } continue; } showText = false; }
-    else placed.push(b);
-    if (o.vis !== true){ o.g.style('display', null); o.vis = true; }
-    o.g.attr('transform', `translate(${x.toFixed(1)},${y.toFixed(1)})`);
-    o.t.style('display', showText ? null : 'none');
-  }
-}
+/* ---------------- WORLD VIEW ---------------- */
+function buildWorld(world){
+  const v = makeView('world', {label:'Interactive world map', maxZ:60});
+  const proj = d3.geoNaturalEarth1().fitWidth(1000, sphere), path = d3.geoPath(proj);
+  Object.assign(v, {proj, path, BW:1000, BH:path.bounds(sphere)[1][1]});
+  v.layers = {oceans:true, continents:true, countries:true, cities:true};
 
-/* ---------------- RENDER ---------------- */
-let countries = [], states = [];
-function colorCountry(d){
-  if (layers.continents) return d.c === 'AN' ? '#fbfdff' : shade(CONT[d.c]?.color || '#ccc', d.id || d.name);
-  return d.c === 'AN' ? '#fbfdff' : RAINBOW[hash(d.name) % RAINBOW.length];
-}
-function recolor(){ gCountries.selectAll('path').attr('fill', colorCountry); }
-
-async function load(){
-  const [world, us] = await Promise.all([
-    fetch('data/countries.json').then(r => r.json()),
-    fetch('data/states.json').then(r => r.json())
-  ]);
-
-  gOcean.append('path').datum(sphere).attr('class','ocean').attr('d', path).on('click', onOceanTap);
+  const wave = v.defs.append('pattern').attr('id','waves').attr('width',24).attr('height',12).attr('patternUnits','userSpaceOnUse');
+  wave.append('path').attr('d','M0 8 q3 -3 6 0 t6 0').attr('fill','none').attr('stroke','#fff').attr('stroke-opacity',.55).attr('stroke-width',.6);
+  const gOcean = v.root.append('g'), gC = v.root.append('g'), gEdge = v.root.append('g');
+  const ocean = gOcean.append('path').datum(sphere).attr('class','ocean').attr('d', path);
+  ocean.node().__item = e => {
+    const [mx, my] = d3.pointer(e, v.svg.node()), ll = proj.invert(v.T.invert([mx, my]));
+    if (!ll) return null; const key = oceanAt(ll[0], ll[1]); return {type:'ocean', key, o:OCEANS[key]};
+  };
   gOcean.append('path').datum(sphere).attr('d', path).attr('fill','url(#waves)').attr('pointer-events','none');
   gOcean.append('path').datum(d3.geoGraticule10()).attr('class','grat').attr('d', path);
-  gFx.append('path').datum(sphere).attr('class','sphere-edge').attr('d', path);
+  gEdge.append('path').datum(sphere).attr('class','sphere-edge').attr('d', path);
 
-  countries = topojson.feature(world, world.objects.countries).features.map(f => {
+  const countries = topojson.feature(world, world.objects.countries).features.map(f => {
     const raw = f.properties.name;
     const info = (f.id && INFO[f.id] && raw !== 'Ashmore and Cartier Is.') ? INFO[f.id] : (BY_NAME[raw] || {a2:'',c:'AS'});
-    const lp = largestPart(f);
-    const b = path.bounds(lp);
+    const lp = largestPart(f, path), b = path.bounds(lp);
     return {f, id:f.id || raw, raw, name:fixName(raw), a2:info.a2, c:info.c, cap:info.cap, fact:info.fact,
-            area:path.area(f), lp, center:path.centroid(lp), span:b[1][0] - b[0][0]};
+            area:path.area(f), lp, bounds:b, center:path.centroid(lp), span:b[1][0] - b[0][0]};
   });
   const OVR = {'840':[-98,39],'124':[-105,58],'643':[95,62],'360':[114,-1],'304':[-41,73],'578':[9,61.5]};
-  countries.forEach(d => { if (OVR[d.id]) d.center = projection(OVR[d.id]); });
+  countries.forEach(d => { if (OVR[d.id]) d.center = proj(OVR[d.id]); });
   const ranked = [...countries].sort((a,b) => b.area - a.area);
   ranked.forEach((d,i) => d.rank = i);
+  v.countries = countries;
 
-  gCountries.selectAll('path').data(countries).join('path')
-    .attr('class','country').attr('d', d => path(d.f)).attr('fill', colorCountry)
-    .on('click', (e,d) => { e.stopPropagation(); onShapeTap(e, {type:'country', d}); });
+  const fill = d => d.c === 'AN' ? '#fbfdff' : v.layers.continents ? shade(CONT[d.c]?.color || '#ccc', d.id) : RAINBOW[hash(d.name) % RAINBOW.length];
+  gC.selectAll('path').data(countries).join('path').attr('class','country').attr('d', d => path(d.f)).attr('fill', fill)
+    .each(function(d){ this.__item = {type:'country', d}; });
 
-  const usStates = topojson.feature(us, us.objects.states).features.filter(f => STATES[f.properties.name]);
-  const GREENS = ['#c5e8c8','#b8e1bd','#d2eed4','#bfe4cc','#cde9c0'];
-  states = usStates.map(f => { const lp = largestPart(f); const b = path.bounds(lp);
-    return {f, lp, name:f.properties.name, ...STATES[f.properties.name], center:path.centroid(lp), span:b[1][0]-b[0][0], area:path.area(f)}; });
-  const SOV = {'Florida':[-81.7,28.3],'Michigan':[-84.6,43.6],'Louisiana':[-92.3,31],'Alaska':[-152,64],'Hawaii':[-155.5,19.7]};
-  states.forEach(d => { if (SOV[d.name]) d.center = projection(SOV[d.name]); });
-  gStates.selectAll('path').data(states).join('path')
-    .attr('class','state').attr('d', d => path(d.f)).attr('fill', d => GREENS[hash(d.name) % GREENS.length])
-    .on('click', (e,d) => { e.stopPropagation(); onShapeTap(e, {type:'state', d}); });
+  v.layerDefs = [['oceans','Oceans','#8cc3e2','#e3f1f9'], ['continents','Continents','#f2c27e','#fdf0dc'],
+                 ['countries','Countries','#b9a8e6','#efeafb'], ['cities','Cities','#ebc34f','#fdf4d6']];
+  v.onLayer = k => { if (k === 'continents') gC.selectAll('path').attr('fill', fill); };
 
-  // labels, in priority order
-  for (const [key, c] of Object.entries(CONT)){
-    addLabel({cls:'cont-l', layer:'continents', text:c.name, size:14, p:projection(c.pos), maxZ:1.9,
-      item:() => ({type:'continent', key, c}), onTap:e => select({type:'continent', key, c}, e)});
-  }
-  for (const [key, o] of Object.entries(OCEANS)){
-    o.pos.forEach(p => addLabel({cls: o.big ? 'ocean-l' : 'sea-l', layer:'oceans', text:o.name, size:o.big ? 19 : 14,
-      p:projection(p), minZ:o.big ? 0 : 2.4, maxZ:o.big ? 14 : 30, item:() => ({type:'ocean', key, o}), onTap:e => select({type:'ocean', key, o}, e)}));
-  }
-  ranked.forEach(d => addLabel({cls:'country-l', layer:'countries', text:d.name, size:d.rank < 20 ? 15 : 12.5,
-    p:d.center, minZ:1.45, span:d.span, forceZ:d.rank < 60 ? 6 : 14,
-    hideWhen: d.id === '840' ? z => layers.states && z > 2.2 : null}));
-  [...states].sort((a,b) => b.area - a.area).forEach(d => addLabel({cls:'state-l', layer:'states', text:d.name, size:12.5,
-    p:d.center, minZ:2.2, span:d.span, forceZ:12}));
+  for (const [key, c] of Object.entries(CONT))
+    addLabel(v, {cls:'cont-l', layer:'continents', text:c.name, size:14, p:proj(c.pos), maxZ:1.9, item:{type:'continent', key, c}});
+  for (const [key, o] of Object.entries(OCEANS))
+    o.pos.forEach(p => addLabel(v, {cls:o.big ? 'ocean-l' : 'sea-l', layer:'oceans', text:o.name, size:o.big ? 19 : 14,
+      p:proj(p), minZ:o.big ? 0 : 2.4, maxZ:o.big ? 14 : 30, item:{type:'ocean', key, o}}));
+  ranked.forEach(d => addLabel(v, {cls:'country-l', layer:'countries', text:d.name, size:d.rank < 20 ? 15 : 12.5,
+    p:d.center, minZ:1.45, span:d.span, forceZ:d.rank < 60 ? 6 : 14}));
   CITIES.forEach(c => {
-    const city = {name:c[0], lonlat:[c[1],c[2]], tier:c[3], cap:!!c[4], where:c[5], fact:c[6]};
-    addLabel({cls:'city', layer:'cities', text:city.name, size:12.5, dx:city.cap ? 11 : 8, p:projection(city.lonlat),
-      minZ:[0,1.6,3.2,5.5][city.tier],
-      marker: g => city.cap ? g.append('path').attr('d', d3.symbol(d3.symbolStar, 130)()) : g.append('circle').attr('r', 4.5),
-      item:() => ({type:'city', d:city}), onTap:e => select({type:'city', d:city}, e)});
+    const city = {name:c[0], pt:proj([c[1],c[2]]), tier:c[3], cap:!!c[4], where:c[5], fact:c[6], z:9};
+    addLabel(v, {cls:'city', layer:'cities', text:city.name, size:12.5, dx:city.cap ? 11 : 8, p:city.pt,
+      minZ:[0,1.6,3.2,5.5][city.tier], item:{type:'city', d:city},
+      marker: g => city.cap ? g.append('path').attr('d', d3.symbol(d3.symbolStar, 130)()) : g.append('circle').attr('r', 4.5)});
   });
 
-  $('#loading').remove();
-  resize(true);
-  (document.fonts ? document.fonts.ready : Promise.resolve()).then(measureLabels);
+  v.highlight = item => {
+    gC.selectAll('.sel').classed('sel', false);
+    if (item && item.type === 'country') gC.selectAll('path').filter(d => d === item.d).classed('sel', true).raise();
+  };
+  v.flash = t => {
+    if (t.type === 'ocean'){ ringAt(v, v.T.apply(proj(t.o.pos[0]))); return; }
+    flashPath(gC, t.d);
+    const b = t.d.bounds, c = [(b[0][0]+b[1][0])/2, (b[0][1]+b[1][1])/2], [sx, sy] = v.T.apply(c);
+    if (sx < 0 || sx > W || sy < 0 || sy > H || t.d.span * v.T.k < 8) zoomToPoint(v, c, Math.max(v.T.k / v.k0, Math.min(6, 40 / (t.d.span || 1))));
+  };
+  v.game = {
+    modes:[{id:'easy', label:'Easy'}, {id:'hard', label:'All countries'}],
+    pool: mode => {
+      const real = countries.filter(d => d.cap && d.c !== 'AN');
+      if (mode === 'hard') return real.map(d => ({type:'country', d}));
+      const oc = Object.entries(OCEANS).filter(([,o]) => o.big).map(([key,o]) => ({type:'ocean', key, o}));
+      return real.filter(d => d.rank < 55).map(d => ({type:'country', d})).concat(oc, oc);
+    },
+    ask: t => ({flag:t.type === 'country' ? flagOf(t.d.a2) : '', pre:t.type === 'ocean' ? 'Find the ' : 'Find ', name:nameOf(t), post:'!',
+               speak:`Can you find ${t.type === 'ocean' ? 'the ' : ''}${nameOf(t)}?`})
+  };
+  return v;
+}
+function flashPath(g, d){
+  const sel = g.selectAll('path').filter(x => x === d);
+  sel.raise().classed('hint', false); void document.body.offsetWidth; sel.classed('hint', true);
+  setTimeout(() => sel.classed('hint', false), 3600);
+}
+function ringAt(v, p){
+  for (let i = 0; i < 3; i++) v.gFx.append('circle').attr('class','hint-ring').attr('cx',p[0]).attr('cy',p[1]).attr('r',10).attr('opacity',1)
+    .transition().delay(i * 350).duration(900).attr('r',80).attr('opacity',0).remove();
 }
 
-/* ---------------- VIEW ---------------- */
-function homeTransform(){
-  const k = Math.min(W / BW, H / BH) * 1.0;
-  const kk = Math.max(k, Math.min(W / BW, (H * .9) / BH));
-  return d3.zoomIdentity.translate((W - BW * kk) / 2, (H - BH * kk) / 2 + 10).scale(kk);
-}
-function resize(first){
-  W = innerWidth; H = innerHeight;
-  const h = homeTransform(); k0 = h.k;
-  zoom.scaleExtent([k0 * .8, k0 * 60]).translateExtent([[-BW * .25, -BH * .3], [BW * 1.25, BH * 1.3]]).extent([[0,0],[W,H]]);
-  if (first) svg.call(zoom.transform, h); else svg.transition().duration(300).call(zoom.transform, h);
-  measureLabels();
-}
-addEventListener('resize', () => { clearTimeout(resize.t); resize.t = setTimeout(() => resize(false), 150); });
+/* ---------------- USA VIEW ---------------- */
+function buildUSA(us){
+  const v = makeView('usa', {label:'Interactive map of the United States', maxZ:30, padTop:true});
+  const fc = topojson.feature(us, us.objects.states);
+  fc.features = fc.features.filter(f => STATES[f.properties.name]);
+  const proj = d3.geoAlbersUsa().fitWidth(1000, fc), path = d3.geoPath(proj);
+  Object.assign(v, {proj, path, BW:1000, BH:path.bounds(fc)[1][1] + 4});
 
-/* view history, so Back returns to where you were */
-const viewHistory = [];
-function pushView(){ viewHistory.push(T); if (viewHistory.length > 30) viewHistory.shift(); $('#zback').hidden = false; }
-function goBack(){
-  const t = viewHistory.pop(); $('#zback').hidden = !viewHistory.length;
-  svg.transition().duration(700).ease(d3.easeCubicInOut).call(zoom.transform, t || homeTransform());
-}
-$('#zback').onclick = goBack;
-addEventListener('keydown', e => {
-  if (e.key === 'Escape' || e.key === 'Backspace'){ if (viewHistory.length){ e.preventDefault(); goBack(); } }
-  if (e.key === '+' || e.key === '='){ svg.transition().duration(300).call(zoom.scaleBy, 1.8); }
-  if (e.key === '-'){ svg.transition().duration(300).call(zoom.scaleBy, 1/1.8); }
-});
-addEventListener('mouseup', e => { if (e.button === 3){ e.preventDefault(); goBack(); } });  // mouse "back" side button
+  // give neighbouring states different pastel colors
+  const geoms = us.objects.states.geometries, nb = topojson.neighbors(geoms), colorOf = {};
+  geoms.forEach((g, i) => {
+    const used = new Set(nb[i].map(j => colorOf[geoms[j].properties.name]));
+    const start = hash(g.properties.name) % RAINBOW.length;
+    for (let s = 0; s < RAINBOW.length; s++){ const c = RAINBOW[(start + s) % RAINBOW.length]; if (!used.has(c)){ colorOf[g.properties.name] = c; break; } }
+  });
 
-let lastDbl = 0;
-function onDoubleTap(e){
-  const now = Date.now(); if (now - lastDbl < 450) return; lastDbl = now;
-  if (e.cancelable) e.preventDefault();
-  const pt = e.changedTouches ? e.changedTouches[0] : e;
-  const [mx, my] = d3.pointer(pt, svg.node());
-  const el = document.elementFromPoint(pt.clientX, pt.clientY);
-  const d = el && el.__data__;
-  const g = el && el.closest && el.closest('.tap');
-  let item = null;
-  if (d && d.f && d.lp && el.classList.contains('country')) item = {type:'country', d};
-  else if (d && d.f && el.classList.contains('state')) item = {type:'state', d};
-  if (item){ pushView(); zoomToBounds(path.bounds(item.d.lp)); return; }
-  if (g && g.__label){ const i = describe(g.__label.item()); pushView(); zoomToPoint(i.point, Math.max(i.z, T.k / k0 * 1.8)); return; }
-  pushView();
-  const p = T.invert([mx, my]);
-  zoomToPoint(p, Math.min(60, T.k / k0 * 2.2));
-}
+  const SOV = {'Florida':[-81.7,28.3],'Michigan':[-84.6,43.6],'Louisiana':[-92.3,31]};
+  const cityFacts = Object.fromEntries(CITIES.map(c => [c[0], c[6]]));
+  const states = fc.features.map(f => {
+    const name = f.properties.name, lp = largestPart(f, path), b = path.bounds(lp);
+    const s = {f, lp, name, ...STATES[name], center:SOV[name] ? proj(SOV[name]) : path.centroid(lp), span:b[1][0] - b[0][0],
+               area:path.area(f), bounds:path.bounds(f), capPt:CAP_LL[name] && proj(CAP_LL[name])};
+    s.capFact = cityFacts[s.cap];
+    return s;
+  });
+  v.states = states;
+  const gS = v.root.append('g');
+  gS.selectAll('path').data(states).join('path').attr('class','state').attr('d', d => path(d.f)).attr('fill', d => colorOf[d.name] || RAINBOW[0])
+    .each(function(d){ this.__item = {type:'state', d}; });
 
-function zoomToBounds(b, maxZ = 14){
-  if (!b || !isFinite(b[0][0])) return;
-  const dx = b[1][0] - b[0][0], dy = b[1][1] - b[0][1];
-  const cx = (b[0][0] + b[1][0]) / 2, cy = (b[0][1] + b[1][1]) / 2;
-  const k = Math.min(k0 * maxZ, Math.max(k0, .6 / Math.max(dx / W, dy / H)));
-  svg.transition().duration(900).ease(d3.easeCubicInOut)
-    .call(zoom.transform, d3.zoomIdentity.translate(W/2, H/2).scale(k).translate(-cx, -cy));
-}
-function zoomToPoint(p, z){
-  svg.transition().duration(900).ease(d3.easeCubicInOut)
-    .call(zoom.transform, d3.zoomIdentity.translate(W/2, H/2).scale(k0 * z).translate(-p[0], -p[1]));
-}
-$('#zin').onclick = () => svg.transition().duration(300).call(zoom.scaleBy, 1.8);
-$('#zout').onclick = () => svg.transition().duration(300).call(zoom.scaleBy, 1/1.8);
-$('#zhome').onclick = () => { if (T.k / k0 > 1.05) pushView(); } ; $('#zhome').addEventListener('click', () => svg.transition().duration(700).call(zoom.transform, homeTransform()));
+  v.layers = {names:true, capitals:true, cities:true};
+  v.layerDefs = [['names','State names','#93d09b','#e6f5e8'], ['capitals','Capitals','#f2a3ba','#fce6ed'], ['cities','Big cities','#ebc34f','#fdf4d6']];
 
-/* ---------------- HOVER (mouse) ---------------- */
-const tip = $('#tip');
-svg.on('pointermove', e => {
-  if (e.pointerType !== 'mouse' || e.buttons) { tip.hidden = true; return; }
-  const d = e.target.__data__;
-  let name = null;
-  if (e.target.classList.contains('country') || e.target.classList.contains('state')) name = d.name;
-  else if (e.target.classList.contains('ocean')){ const ll = projection.invert(T.invert(d3.pointer(e, svg.node()))); if (ll) name = OCEANS[oceanAt(ll[0], ll[1])].name; }
-  if (!name){ tip.hidden = true; return; }
-  tip.textContent = name; tip.hidden = false; tip.style.left = e.clientX + 'px'; tip.style.top = e.clientY + 'px';
-});
-svg.on('pointerleave', () => tip.hidden = true);
-svg.on('pointerdown.tip', () => tip.hidden = true);
+  [...states].sort((a,b) => b.area - a.area).forEach((d, i) => addLabel(v, {cls:'usa-l', layer:'names', text:d.name, size:i < 12 ? 15 : 13,
+    p:d.center, span:d.span, forceZ:4.5}));
+  const capNames = new Set();
+  states.filter(d => d.capPt && d.name !== 'District of Columbia').forEach(d => {
+    capNames.add(d.cap);
+    addLabel(v, {cls:'city cap-l', layer:'capitals', text:d.cap, size:11.5, dx:9, p:d.capPt, item:{type:'capital', d},
+      marker: g => g.append('path').attr('d', d3.symbol(d3.symbolStar, 90)())});
+  });
+  CITIES.filter(c => c[5].includes('United States') && !capNames.has(c[0]) && c[0] !== 'Washington, D.C.').forEach(c => {
+    const city = {name:c[0], pt:proj([c[1],c[2]]), where:c[5], fact:c[6], z:6};
+    if (!city.pt) return;
+    addLabel(v, {cls:'city', layer:'cities', text:city.name, size:12, dx:8, p:city.pt, minZ:c[3] === 3 ? 1.8 : 0,
+      item:{type:'city', d:city}, marker: g => g.append('circle').attr('r', 4)});
+  });
+  const dc = states.find(d => d.name === 'District of Columbia');
+  if (dc) addLabel(v, {cls:'city dc-l', layer:'capitals', text:'Washington, D.C.', size:12, dx:11, p:proj([-77.04,38.9]),
+    item:{type:'state', d:dc}, marker: g => g.append('path').attr('d', d3.symbol(d3.symbolStar, 150)())});
 
-/* ---------------- TAPS ---------------- */
-function onShapeTap(e, item){ select(item, e); }
-function onOceanTap(e){
-  const [mx, my] = d3.pointer(e, svg.node());
-  const ll = projection.invert(T.invert([mx, my]));
-  if (!ll) return;
-  const key = oceanAt(ll[0], ll[1]);
-  select({type:'ocean', key, o:OCEANS[key]}, e);
+  v.highlight = item => {
+    gS.selectAll('.sel').classed('sel', false);
+    if (item && (item.type === 'state' || item.type === 'capital')) gS.selectAll('path').filter(d => d === item.d).classed('sel', true).raise();
+  };
+  v.flash = t => {
+    flashPath(gS, t.d);
+    if (t.d.span * v.T.k < 12) zoomToBounds(v, t.d.bounds, 6);
+  };
+  v.game = {
+    modes:[{id:'states', label:'States'}, {id:'capitals', label:'Capitals'}],
+    pool: () => states.filter(d => d.name !== 'District of Columbia').map(d => ({type:'state', d})),
+    ask: (t, mode) => mode === 'capitals'
+      ? {flag:'', pre:'Which state has the capital ', name:t.d.cap, post:'?', speak:`Which state has the capital ${t.d.cap}?`}
+      : {flag:'', pre:'Find ', name:t.d.name, post:'!', speak:`Can you find ${t.d.name}?`},
+    match: (item, t) => (item.type === 'state' || item.type === 'capital') && item.d === t.d,
+    wrong: (item, t, mode) => mode === 'capitals' && item.type === 'state' ? `That's ${item.d.name}. Its capital is ${item.d.cap}.` : null
+  };
+  return v;
 }
 
+/* ---------------- SPACE VIEW ---------------- */
+function buildSpace(){
+  const v = makeView('space', {label:'Interactive solar system', maxZ:30, minZ:.5, padTop:true, padSide:8, BW:SP.W, BH:SP.H});
+  const {cx, cy, tilt} = SP, ra = SP.rot * Math.PI / 180, cos = Math.cos(ra), sin = Math.sin(ra);
+  const offset = (dx, dy) => { const y = dy * tilt; return [dx * cos - y * sin, dx * sin + y * cos]; };
+  const project = (dx, dy) => { const o = offset(dx, dy); return [cx + o[0], cy + o[1]]; };
+  const plane = `translate(${cx},${cy}) rotate(${SP.rot}) scale(1,${tilt})`;
+  v.layers = {names:true, orbits:true, moving:true, fast:false};
+  v.layerDefs = [['names','Names','#c9b8f2','#ece6fb'], ['orbits','Orbits','#9fc0ec','#e3eefa'],
+                 ['moving','Moving','#93d09b','#e6f5e8'], ['fast','Super fast','#f2a3ba','#fce6ed']];
+  v.vt = 0;
+
+  // painted Milky Way behind everything
+  const gal = document.createElement('canvas'); gal.id = 'galaxy'; gal.setAttribute('aria-hidden','true');
+  $('#app').insertBefore(gal, $('#app').firstChild);
+
+  /* ---- gradients ---- */
+  const radial = (id, stops, attrs = {}) => {
+    const g = v.defs.append('radialGradient').attr('id', id);
+    Object.entries(attrs).forEach(([k, val]) => g.attr(k, val));
+    stops.forEach(([o, c, a = 1]) => g.append('stop').attr('offset', o).attr('stop-color', c).attr('stop-opacity', a));
+    return g;
+  };
+  radial('sun-core', [['0%','#fffbe8'],['30%','#ffe596'],['70%','#ffb84a'],['100%','#ff8c3a']], {cx:'45%', cy:'42%', r:'60%'});
+  radial('sun-glow', [['20%','#ffcf70',.6],['45%','#ff9a5a',.22],['100%','#ff6f7a',0]]);
+  radial('sun-halo', [['0%','#ffd9a0',.16],['100%','#c27bff',0]]);
+  radial('coma', [['0%','#ffffff',.9],['40%','#cdeaff',.35],['100%','#a9c8ff',0]]);
+  BODIES.filter(b => !b.belt && b.id !== 'sun').forEach(b => {
+    b.shadeGrad = radial('sh-' + b.id, [['0%','#ffffff',.38],['32%','#ffffff',0],['70%','#070620',.3],['100%','#070620',.82]], {r:'78%'});
+    v.defs.append('clipPath').attr('id','clip-' + b.id).append('circle').attr('r', b.r);
+  });
+
+  const gOrbits = v.root.append('g').attr('class','orbits').attr('transform', plane);
+  const gBelts = v.root.append('g');
+  const gTails = v.root.append('g');
+  const gBodies = v.root.append('g');
+
+  // comets follow ellipses with the Sun at one focus (flat orbit-plane coordinates)
+  function cometFlat(b, t){
+    const {q, Q, tilt: w} = b.comet, a = (q + Q) / 2, e = (Q - q) / (Q + q), bb = a * Math.sqrt(1 - e * e);
+    const M = 2 * Math.PI * (t / b.period + b.phase);
+    let E = M; for (let i = 0; i < 8; i++) E -= (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E));
+    const x = a * (Math.cos(E) - e), y = bb * Math.sin(E);
+    return [x * Math.cos(w) - y * Math.sin(w), -(x * Math.sin(w) + y * Math.cos(w))];
+  }
+  BODIES.forEach(b => {
+    if (b.orbit && !b.parent) gOrbits.append('circle').attr('class','orbit').attr('r', b.orbit);
+    if (b.comet) gOrbits.append('path').attr('class','orbit comet').attr('d', d3.line()(d3.range(0, 1.0001, 1/200).map(f => cometFlat({...b, phase:0}, f * b.period))));
+  });
+
+  // asteroid belt and Kuiper belt: lots of specks lying in the tilted plane
+  const rnd = d3.randomLcg(7);
+  const belt = (r0, r1, n, colors, op) => {
+    const g = gBelts.append('g');
+    for (let i = 0; i < n; i++){
+      const a = rnd() * Math.PI * 2, r = r0 + (r1 - r0) * (rnd() + rnd()) / 2;
+      g.append('circle').attr('cx', r * Math.cos(a)).attr('cy', r * Math.sin(a)).attr('r', .7 + rnd() * 1.1)
+        .attr('fill', colors[i % colors.length]).attr('opacity', op * (.45 + rnd() * .55));
+    }
+    return g;
+  };
+  const asteroidBelt = belt(170, 212, 420, ['#b9a794','#9d8e80','#d6c4ae'], .85);
+  const kuiperBelt = belt(486, 560, 380, ['#9fb6ea','#c3cff5','#8fa2d8'], .55);
+  asteroidBelt.node().__item = {type:'body', d:BODY.asteroids};
+  kuiperBelt.node().__item = {type:'body', d:BODY.kuiper};
+
+  /* ---- surface details, clipped to each planet ---- */
+  const DECO = {
+    earth: (g, r) => {
+      g.append('path').attr('d', `M${-r*.55} ${-r*.5}c${r*.3} ${-r*.25} ${r*.6} 0 ${r*.55} ${r*.3}s${-r*.35} ${r*.3} ${-r*.3} ${r*.6} ${-r*.45} ${r*.1} ${-r*.4} ${-r*.2} ${-r*.05} ${-r*.5} ${r*.2} ${-r*.7}z`).attr('fill','#5aa865');
+      g.append('path').attr('d', `M${r*.15} ${r*.15}c${r*.3} 0 ${r*.55} ${r*.2} ${r*.45} ${r*.45}s${-r*.4} ${r*.3} ${-r*.45} ${r*.05}z`).attr('fill','#6bb36f');
+      g.append('ellipse').attr('cx', r*.2).attr('cy', -r*.25).attr('rx', r*.55).attr('ry', r*.12).attr('fill','#fff').attr('opacity',.55);
+      g.append('ellipse').attr('cx', -r*.1).attr('cy', r*.6).attr('rx', r*.5).attr('ry', r*.1).attr('fill','#fff').attr('opacity',.45);
+    },
+    mars: (g, r) => {
+      g.append('ellipse').attr('cy', -r*.92).attr('rx', r*.5).attr('ry', r*.22).attr('fill','#fbf1ea');
+      g.append('ellipse').attr('cx', -r*.2).attr('cy', r*.1).attr('rx', r*.45).attr('ry', r*.18).attr('fill','#9c4128').attr('opacity',.55);
+      g.append('ellipse').attr('cx', r*.35).attr('cy', r*.45).attr('rx', r*.3).attr('ry', r*.12).attr('fill','#a8492d').attr('opacity',.45);
+    },
+    venus: (g, r) => [-.4, 0, .35].forEach((y, i) => g.append('ellipse').attr('cy', y * r).attr('rx', r * 1.1).attr('ry', r * .14)
+      .attr('fill', i % 2 ? '#f5e3b8' : '#d9b97f').attr('opacity', .6)),
+    jupiter: (g, r) => {
+      [[-.62,.12,'#b8875f'],[-.38,.1,'#efdcc1'],[-.18,.14,'#b07a52'],[.08,.12,'#efdcc1'],[.3,.14,'#bb8a62'],[.55,.1,'#e6cfae'],[.75,.1,'#b8875f']]
+        .forEach(([y, h, c]) => g.append('rect').attr('x', -r).attr('y', y * r).attr('width', r * 2).attr('height', h * r).attr('fill', c).attr('opacity', .85));
+      g.append('ellipse').attr('cx', r*.3).attr('cy', r*.37).attr('rx', r*.2).attr('ry', r*.11).attr('fill','#c0583a').attr('opacity',.9);
+    },
+    saturn: (g, r) => [[-.5,'#cfae72'],[-.15,'#ead6a6'],[.2,'#d2b37a'],[.5,'#ead6a6']].forEach(([y, c]) =>
+      g.append('rect').attr('x', -r).attr('y', y * r).attr('width', r * 2).attr('height', r * .16).attr('fill', c).attr('opacity', .7)),
+    neptune: (g, r) => {
+      g.append('ellipse').attr('cx', -r*.25).attr('cy', r*.15).attr('rx', r*.28).attr('ry', r*.16).attr('fill','#22388f').attr('opacity',.8);
+      g.append('ellipse').attr('cx', r*.1).attr('cy', -r*.35).attr('rx', r*.6).attr('ry', r*.07).attr('fill','#9db6f5').attr('opacity',.45);
+    },
+    pluto: (g, r) => g.append('path').attr('d', `M${r*.1} ${r*.55}c${-r*.5} ${-r*.3} ${-r*.55} ${-r*.75} ${-r*.2} ${-r*.75}c${r*.15} 0 ${r*.22} ${r*.12} ${r*.25} ${r*.2}c${r*.05} ${-r*.1} ${r*.15} ${-r*.2} ${r*.3} ${-r*.15}c${r*.35} ${r*.1} ${r*.2} ${r*.55} ${-r*.35} ${r*.7}z`).attr('fill','#f3e4d2'),
+    craters: (g, r) => [[-.35,-.3,.22],[.3,.1,.18],[-.1,.45,.15],[.4,-.45,.12]].forEach(([x, y, s]) =>
+      g.append('circle').attr('cx', x * r).attr('cy', y * r).attr('r', s * r).attr('fill','#000').attr('opacity', .16))
+  };
+  const ringEllipse = (g, r, half) => {
+    const rings = [[2.25, .3, '#d9c49a', .85], [1.8, .2, '#b49c74', .75], [1.5, .1, '#e8d8b4', .6]];
+    rings.forEach(([k, w, c, op]) => {
+      const rx = r * k, ry = r * k * .3;
+      const el = half ? g.append('path').attr('d', `M${-rx} 0A${rx} ${ry} 0 0 0 ${rx} 0`) : g.append('ellipse').attr('rx', rx).attr('ry', ry);
+      el.attr('fill','none').attr('stroke', c).attr('stroke-width', r * w).attr('stroke-opacity', op).attr('transform', `rotate(${SP.rot})`).attr('pointer-events','none');
+    });
+  };
+
+  /* ---- bodies ---- */
+  const pos = {}, flat = {};
+  BODIES.filter(b => !b.belt).forEach(b => {
+    const parentG = b.parent ? BODY[b.parent].g : gBodies;
+    if (b.parent) parentG.insert('circle', ':first-child').attr('class','orbit moon-orbit').attr('r', b.orbit).attr('transform', `rotate(${SP.rot}) scale(1,${tilt})`);
+    const g = parentG.append('g').attr('class','body');
+    g.node().__item = {type:'body', d:b};
+    const inner = g.append('g');
+    inner.append('circle').attr('r', b.r + (b.parent ? 4 : 9)).attr('fill','transparent');
+    if (b.id === 'sun'){
+      inner.append('circle').attr('r', b.r * 5).attr('fill','url(#sun-halo)').attr('pointer-events','none');
+      inner.append('circle').attr('class','sun-glow').attr('r', b.r * 2.6).attr('fill','url(#sun-glow)').attr('pointer-events','none');
+      inner.append('circle').attr('r', b.r).attr('fill','url(#sun-core)');
+    } else if (b.comet){
+      inner.append('circle').attr('r', b.r * 3.2).attr('fill','url(#coma)').attr('pointer-events','none');
+      inner.append('circle').attr('r', b.r).attr('fill', b.color);
+    } else {
+      if (b.rings) ringEllipse(inner, b.r, false);
+      if (b.tiltRing) inner.append('ellipse').attr('rx', b.r * .42).attr('ry', b.r * 1.7).attr('fill','none').attr('stroke','#d6f4f6').attr('stroke-width',1).attr('stroke-opacity',.55);
+      inner.append('circle').attr('r', b.r).attr('fill', b.color);
+      if (b.deco) DECO[b.deco](inner.append('g').attr('clip-path', `url(#clip-${b.id})`).attr('pointer-events','none'), b.r);
+      inner.append('circle').attr('r', b.r).attr('fill', `url(#sh-${b.id})`).attr('pointer-events','none');
+      if (b.rings) ringEllipse(inner, b.r, true);
+    }
+    inner.append('circle').attr('class','sel-ring').attr('r', b.r + (b.parent ? 2.5 : 5)).attr('hidden','');
+    b.g = g; b.inner = inner;
+    if (b.comet){
+      b.grad = v.defs.append('linearGradient').attr('id','tail-' + b.id).attr('gradientUnits','userSpaceOnUse');
+      b.grad.append('stop').attr('offset','0%').attr('stop-color','#eaf6ff').attr('stop-opacity',.9);
+      b.grad.append('stop').attr('offset','45%').attr('stop-color','#a9d4ff').attr('stop-opacity',.45);
+      b.grad.append('stop').attr('offset','100%').attr('stop-color','#c49bff').attr('stop-opacity',0);
+      b.tail = gTails.append('line').attr('class','tail').attr('stroke', `url(#tail-${b.id})`).attr('stroke-width', b.r * 2.4).attr('stroke-linecap','round');
+    }
+  });
+  BODIES.forEach(b => b.pos = () => b.belt ? project(...b.flat) : pos[b.id]);
+  const topLevel = BODIES.filter(b => !b.belt && !b.parent);
+  let lastOrder = '';
+
+  function shadeToward(b, p){
+    if (!b.shadeGrad) return;
+    let dx = cx - p[0], dy = cy - p[1]; const d = Math.hypot(dx, dy) || 1; dx /= d; dy /= d;
+    const fx = (50 + 30 * dx).toFixed(1) + '%', fy = (50 + 30 * dy).toFixed(1) + '%';
+    b.shadeGrad.attr('cx', fx).attr('cy', fy).attr('fx', fx).attr('fy', fy);
+  }
+  function place(){
+    const t = v.vt / YEAR_S;
+    BODIES.forEach(b => {
+      if (b.belt) return;
+      if (b.parent){
+        const a = 2 * Math.PI * (v.vt / b.vperiod + hash(b.id) % 10 / 10);
+        const lx = b.orbit * Math.cos(a), ly = -b.orbit * Math.sin(a), o = offset(lx, ly), pp = pos[b.parent];
+        b.g.attr('transform', `translate(${o[0].toFixed(2)},${o[1].toFixed(2)})`);
+        pos[b.id] = [pp[0] + o[0], pp[1] + o[1]];
+        const behind = ly < 0; if (behind !== b.behind){ b.behind = behind; behind ? b.g.lower() : b.g.raise(); }
+        shadeToward(b, pos[b.id]);
+        return;
+      }
+      let f = [0, 0];
+      if (b.comet) f = cometFlat(b, t);
+      else if (b.orbit){ const a = 2 * Math.PI * (t / b.period + b.phase); f = [b.orbit * Math.cos(a), -b.orbit * Math.sin(a)]; }
+      const p = project(f[0], f[1]);
+      flat[b.id] = f; pos[b.id] = p;
+      b.g.attr('transform', `translate(${p[0].toFixed(2)},${p[1].toFixed(2)})`);
+      if (b.id !== 'sun') b.inner.attr('transform', `scale(${(1 + .16 * f[1] / 560).toFixed(3)})`);   // a little smaller when far away
+      shadeToward(b, p);
+      if (b.comet){
+        let dx = p[0] - cx, dy = p[1] - cy; const dist = Math.hypot(dx, dy) || 1, L = Math.min(80, 2600 / dist);
+        const x2 = p[0] + dx / dist * L, y2 = p[1] + dy / dist * L;
+        b.tail.attr('x1', p[0]).attr('y1', p[1]).attr('x2', x2).attr('y2', y2);
+        b.grad.attr('x1', p[0]).attr('y1', p[1]).attr('x2', x2).attr('y2', y2);
+      }
+    });
+    // things nearer to us are drawn on top, so planets pass in front of and behind the Sun
+    const order = [...topLevel].sort((a, b) => flat[a.id][1] - flat[b.id][1]);
+    const key = order.map(b => b.id).join();
+    if (key !== lastOrder){ lastOrder = key; order.forEach(b => gBodies.node().appendChild(b.g.node())); }
+    asteroidBelt.attr('transform', `${plane} rotate(${-(t / 4.5) * 360})`);
+    kuiperBelt.attr('transform', `${plane} rotate(${-(t / 250) * 360})`);
+  }
+  place();
+
+  let last = 0;
+  function frame(ts){
+    v.anim = 0;
+    if (active !== v || !v.layers.moving){ last = 0; return; }
+    const dt = last ? Math.min(.1, (ts - last) / 1000) : 0; last = ts;
+    v.vt += dt * (v.layers.fast ? 12 : 1);
+    place(); updateLabels(v);
+    v.anim = requestAnimationFrame(frame);
+  }
+  v.start = () => { if (!v.anim && v.layers.moving) v.anim = requestAnimationFrame(frame); };
+  v.setMoving = on => { v.layers.moving = on; refreshChips(); v.start(); };
+  v.onLayer = k => {
+    if (k === 'orbits') gOrbits.attr('display', v.layers.orbits ? null : 'none');
+    if (k === 'fast' && v.layers.fast && !v.layers.moving){ v.layers.moving = true; refreshChips(); }
+    v.start();
+  };
+  v.onShow = () => v.start();
+  v.onFocus = it => { if (it.type === 'body' && !it.d.belt && it.d.id !== 'sun') v.setMoving(false); };
+
+  v.onResize = () => {
+    drawGalaxy(gal);
+    v.bg.selectAll('*').remove();
+    const r = d3.randomLcg(11), n = Math.round(W * H / 16000);
+    for (let i = 0; i < n; i++) v.bg.append('circle').attr('class','bgstar twinkle')
+      .attr('cx', r() * W).attr('cy', r() * H).attr('r', .6 + r() * 1).attr('opacity', .5 + r() * .5)
+      .style('animation-delay', (r() * 4).toFixed(2) + 's');
+  };
+
+  BODIES.forEach(b => {
+    const small = b.parent || b.kind === 'Asteroid' || b.kind === 'Comet' || b.kind === 'Dwarf planet';
+    addLabel(v, {cls:b.belt ? 'belt-l' : 'space-l', layer:'names', text:b.label || b.name, size:b.belt ? 14 : small ? 11.5 : 14,
+      pf:b.pos, dyf:b.belt ? null : k => b.r * k + 11, minZ:b.parent ? 4 : small && b.id !== 'pluto' ? 1.5 : 0, item:{type:'body', d:b}});
+  });
+
+  v.highlight = item => {
+    gBodies.selectAll('.sel-ring').attr('hidden','');
+    if (item && item.type === 'body' && item.d.inner) item.d.inner.select('.sel-ring').attr('hidden', null);
+  };
+  v.flash = t => {
+    const b = t.d, was = v.layers.moving;
+    v.setMoving(false);
+    const show = () => ringAt(v, v.T.apply(b.pos()));
+    const [sx, sy] = v.T.apply(b.pos());
+    if (sx < 0 || sx > W || sy < 0 || sy > H){ v.svg.transition().duration(700).call(v.zoom.transform, homeT(v)).on('end', show); } else show();
+    setTimeout(() => { if (was) v.setMoving(true); }, 3500);
+  };
+  v.game = {
+    modes:[{id:'space', label:'Space'}],
+    pool: () => BODIES.filter(b => ['Planet','Star'].includes(b.kind) || b.id === 'moon' || b.id === 'pluto' || b.id === 'halley').map(d => ({type:'body', d})),
+    ask: t => ({flag:bodyIcon(t.d), pre:t.d.the ? 'Find the ' : 'Find ', name:t.d.name, post:'!', speak:`Can you find ${t.d.the ? 'the ' : ''}${t.d.name}?`})
+  };
+  return v;
+}
+
+/* A painted Milky Way: deep indigo sky, soft nebula clouds, a glowing star band with a dark dust lane. */
+function drawGalaxy(c){
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  c.width = Math.round(W * dpr); c.height = Math.round(H * dpr);
+  const x = c.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const R = Math.max(W, H), rnd = d3.randomLcg(42), gauss = () => (rnd() + rnd() + rnd() - 1.5) / 1.5;
+  const bg = x.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, '#0c0a26'); bg.addColorStop(.5, '#16123d'); bg.addColorStop(1, '#090b22');
+  x.fillStyle = bg; x.fillRect(0, 0, W, H);
+  const rgba = (hex, a) => { const c = d3.color(hex); c.opacity = a; return c + ''; };
+  const blob = (bx, by, r, col, a) => {
+    const g = x.createRadialGradient(bx, by, 0, bx, by, r);
+    g.addColorStop(0, rgba(col, a)); g.addColorStop(1, rgba(col, 0));
+    x.fillStyle = g; x.fillRect(bx - r, by - r, r * 2, r * 2);
+  };
+  x.globalCompositeOperation = 'lighter';
+  blob(W * .12, H * .18, R * .5, '#5a2a8f', .32);
+  blob(W * .9, H * .85, R * .45, '#1d4f96', .32);
+  blob(W * .78, H * .12, R * .3, '#8e2f78', .22);
+  blob(W * .25, H * .9, R * .28, '#256d8c', .18);
+  // the Milky Way band runs corner to corner
+  const ax = -W * .1, ay = H * .92, bx = W * 1.1, by = H * .05;
+  const nx = -(by - ay), ny = bx - ax, nl = Math.hypot(nx, ny);
+  const along = t => [ax + (bx - ax) * t, ay + (by - ay) * t];
+  const COLS = ['#a487e0','#e8a2c8','#86aef0','#f4dcc6','#c7b3ff'];
+  for (let i = 0; i < 220; i++){
+    const t = rnd(), [px, py] = along(t), o = gauss() * H * .09;
+    blob(px + nx / nl * o, py + ny / nl * o, (.03 + .07 * rnd()) * R, COLS[i % COLS.length], .035 + .05 * rnd());
+  }
+  blob(...along(.55), R * .22, '#ffe7c8', .12);   // bright galactic core glow
+  x.globalCompositeOperation = 'source-over';
+  for (let i = 0; i < 70; i++){                    // dark dust lane
+    const t = .15 + rnd() * .75, [px, py] = along(t), o = (gauss() * .25 + .15) * H * .05;
+    blob(px + nx / nl * o, py + ny / nl * o, (.02 + .04 * rnd()) * R, '#090820', .18);
+  }
+  x.globalCompositeOperation = 'lighter';
+  const n = Math.round(W * H / 700);
+  for (let i = 0; i < n; i++){
+    let sx, sy;
+    if (i % 2){ const t = rnd(), [px, py] = along(t), o = gauss() * H * .12; sx = px + nx / nl * o; sy = py + ny / nl * o; }
+    else { sx = rnd() * W; sy = rnd() * H; }
+    const s = rnd(), r = s < .9 ? .25 + rnd() * .5 : .7 + rnd() * .8;
+    x.fillStyle = rgba(['#ffffff','#dfe8ff','#ffe9d6','#e9dcff'][i % 4], .35 + rnd() * .6);
+    x.beginPath(); x.arc(sx, sy, r, 0, Math.PI * 2); x.fill();
+  }
+  for (let i = 0; i < 9; i++){                     // a few bright sparkly stars
+    const sx = rnd() * W, sy = rnd() * H, r = 3 + rnd() * 5;
+    blob(sx, sy, r, '#dfe8ff', .5);
+    x.strokeStyle = 'rgba(230,236,255,.22)'; x.lineWidth = .5;
+    x.beginPath(); x.moveTo(sx - r * 1.6, sy); x.lineTo(sx + r * 1.6, sy); x.moveTo(sx, sy - r * 1.6); x.lineTo(sx, sy + r * 1.6); x.stroke();
+  }
+  x.globalCompositeOperation = 'source-over';
+}
+function bodyIcon(b){
+  if (b.belt) return `<svg viewBox="0 0 40 40">${[[12,14],[22,10],[30,18],[18,24],[27,28],[10,28],[20,17]].map(([x,y],i) => `<circle cx="${x}" cy="${y}" r="${1.4 + i % 3}" fill="#b9a794"/>`).join('')}</svg>`;
+  if (b.comet) return `<svg viewBox="0 0 40 40"><defs><linearGradient id="ic-t" x1="0" x2="1"><stop offset="0" stop-color="#eaf6ff"/><stop offset="1" stop-color="#c49bff" stop-opacity="0"/></linearGradient></defs><path d="M12 15 L36 6 L36 14 Z" fill="url(#ic-t)" transform="rotate(20 12 15)"/><circle cx="12" cy="18" r="5" fill="#eaf6ff"/></svg>`;
+  const r = Math.max(7, Math.min(13, b.r * .8 + 5));
+  const ring = b.rings ? `<ellipse cx="20" cy="20" rx="${r * 1.8}" ry="${r * .55}" fill="none" stroke="#d9c49a" stroke-width="3" transform="rotate(-14 20 20)"/>` : '';
+  const glow = b.id === 'sun' ? `<circle cx="20" cy="20" r="18" fill="#ffb84a" opacity=".35"/>` : '';
+  const fill = b.id === 'sun' ? '#ffcf5a' : b.color;
+  return `<svg viewBox="0 0 40 40">${glow}<circle cx="20" cy="20" r="${r}" fill="${fill}"/><circle cx="${20 - r * .35}" cy="${20 - r * .35}" r="${r * .4}" fill="#fff" opacity=".3"/>${ring}</svg>`;
+}
+
+/* ---------------- CARD ---------------- */
 const ICON = {
-  ocean:'<svg viewBox="0 0 40 40"><path d="M4 16c4-4 8-4 12 0s8 4 12 0 6-3 8-2M4 24c4-4 8-4 12 0s8 4 12 0 6-3 8-2" fill="none" stroke="#5d8fae" stroke-width="2.6" stroke-linecap="round"/></svg>',
   continent:'<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="#fff" stroke="#36405a" stroke-width="2"/><path d="M11 15c3-2 5 0 7-1s4-2 5 0-1 4 1 6 5 1 4 4-4 4-6 4-2-3-5-3-4 2-6 0-1-4-1-6 0-2 1-4z" fill="#c5e8c8"/></svg>',
+  ocean:'<svg viewBox="0 0 40 40"><path d="M4 16c4-4 8-4 12 0s8 4 12 0 6-3 8-2M4 24c4-4 8-4 12 0s8 4 12 0 6-3 8-2" fill="none" stroke="#5d8fae" stroke-width="2.6" stroke-linecap="round"/></svg>',
   city:'<svg viewBox="0 0 40 40"><path d="M8 32V18l7-4v18M15 32V9l9 4v19M24 32V19l8 3v10" fill="#fff" stroke="#36405a" stroke-width="2" stroke-linejoin="round"/><path d="M6 32h28" stroke="#36405a" stroke-width="2" stroke-linecap="round"/></svg>',
   capital:'<svg viewBox="0 0 40 40"><path d="M20 6l4.3 9.2 10.1 1-7.6 6.8 2.2 9.9L20 28l-9 4.9 2.2-9.9-7.6-6.8 10.1-1z" fill="#f2a3ba" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg>'
 };
+function nameOf(it){
+  if (it.type === 'ocean') return it.o.name;
+  if (it.type === 'continent') return it.c.name;
+  if (it.type === 'capital') return it.d.cap;
+  return it.d.name;
+}
+function sameThing(a, b){
+  if (!a || !b || a.type !== b.type) return false;
+  return (a.type === 'ocean' || a.type === 'continent') ? a.key === b.key : a.d === b.d;
+}
 function describe(item){
+  const w = views.world;
   if (item.type === 'country'){
-    const d = item.d, cont = CONT[d.c]?.name;
-    const rows = [['Continent', cont]]; if (d.cap) rows.push(['Capital', d.cap]);
-    return {kind:'Country', kindbg:CONT[d.c]?.color, flag:flagOf(d.a2) || ICON.continent, name:d.name, rows,
-      fact:d.fact || (d.cap ? `Its capital city is ${d.cap}. Can you find it on the map?` : `It is part of ${cont}.`),
-      speak:d.name, bounds:path.bounds(d.lp)};
-  }
-  if (item.type === 'state'){
-    const d = item.d;
-    return {kind:d.name === 'District of Columbia' ? 'US Capital' : 'US State', kindbg:'#c5e8c8', flag:'🇺🇸', name:d.name,
-      rows:[['Capital', d.cap], ['Nickname', d.nick]], fact:d.fact || `Its nickname is the ${d.nick}.`,
-      speak:d.name, bounds:path.bounds(d.lp)};
+    const d = item.d, cont = CONT[d.c]?.name, rows = [['Continent', cont]]; if (d.cap) rows.push(['Capital', d.cap]);
+    return {kind:'Country', bg:CONT[d.c]?.color, flag:flagOf(d.a2) || ICON.continent, name:d.name, rows,
+      fact:d.fact || (d.cap ? `Its capital city is ${d.cap}. Can you find it on the map?` : `It is part of ${cont}.`), speak:d.name, bounds:d.bounds};
   }
   if (item.type === 'ocean'){
     const o = item.o;
-    return {kind:o.big ? 'Ocean' : 'Sea', kindbg:'#e3f1f9', flag:ICON.ocean, name:o.name, rows:[], fact:o.fact, speak:o.name,
-      point:projection(o.pos[0]), z:o.big ? 1.5 : 4};
+    return {kind:o.big ? 'Ocean' : 'Sea', bg:'#e3f1f9', flag:ICON.ocean, name:o.name, rows:[], fact:o.fact, speak:`the ${o.name}`,
+      point:w.proj(o.pos[0]), z:o.big ? 1.5 : 4};
   }
   if (item.type === 'continent'){
-    const c = item.c, n = countries.filter(d => d.c === item.key && d.cap).length;
-    return {kind:'Continent', kindbg:c.color, flag:ICON.continent, name:c.name, rows:n ? [['Countries on this map', n]] : [],
-      fact:c.fact, speak:c.name, point:projection(c.pos), z:item.key === 'EU' ? 3.5 : 2.2};
+    const c = item.c, n = w.countries.filter(d => d.c === item.key && d.cap).length;
+    return {kind:'Continent', bg:c.color, flag:ICON.continent, name:c.name, rows:n ? [['Countries on this map', n]] : [],
+      fact:c.fact, speak:c.name, point:w.proj(c.pos), z:item.key === 'EU' ? 3.5 : 2.2};
   }
   if (item.type === 'city'){
     const d = item.d;
-    return {kind:d.cap ? 'Capital City' : 'City', kindbg:'#fdf0dc', flag:d.cap ? ICON.capital : ICON.city, name:d.name,
-      rows:[['Where', d.where]], fact:d.fact || `${d.name} is a big city in ${d.where}.`, speak:d.name,
-      point:projection(d.lonlat), z:9};
+    return {kind:d.cap ? 'Capital City' : 'City', bg:'#fdf0dc', flag:d.cap ? ICON.capital : ICON.city, name:d.name,
+      rows:[['Where', d.where]], fact:d.fact || `${d.name} is a big city in ${d.where}.`, speak:d.name, point:d.pt, z:d.z};
+  }
+  if (item.type === 'state'){
+    const d = item.d, dc = d.name === 'District of Columbia';
+    return {kind:dc ? 'Capital of the United States' : 'US State', bg:'#e6f5e8', flag:'🇺🇸', name:dc ? 'Washington, D.C.' : d.name,
+      rows:dc ? [['Nickname', d.nick]] : [['Capital', d.cap], ['Nickname', d.nick]], fact:d.fact || `Its nickname is the ${d.nick}.`,
+      speak:dc ? 'Washington, D.C.' : d.name, bounds:d.bounds};
+  }
+  if (item.type === 'capital'){
+    const d = item.d;
+    return {kind:'State Capital', bg:'#fce6ed', flag:ICON.capital, name:d.cap, rows:[['Capital of', d.name]],
+      fact:d.capFact || `${d.cap} is where the leaders of ${d.name} meet to make the state's laws.`, speak:d.cap, point:d.capPt, z:6};
+  }
+  if (item.type === 'body'){
+    const d = item.d;
+    return {kind:d.kind, bg:'#1b1840', flag:bodyIcon(d), name:(d.the && !d.belt ? 'The ' : '') + d.name, rows:d.rows, fact:d.fact,
+      speak:(d.the ? 'the ' : '') + d.name, point:d.pos(), z:d.z};
   }
 }
 
+function ripple(v, x, y){
+  v.gFx.append('circle').attr('class','ripple').attr('cx',x).attr('cy',y).attr('r',6).attr('stroke-opacity',1)
+    .transition().duration(550).attr('r',44).attr('stroke-opacity',0).remove();
+}
 function select(item, e){
   const now = Date.now(); if (select.last && sameThing(select.last, item) && now - select.lastT < 500) return; select.last = item; select.lastT = now;
-  if (e){ const [x, y] = d3.pointer(e, svg.node()); ripple(x, y); }
+  if (e){ const [x, y] = d3.pointer(e, active.svg.node()); ripple(active, x, y); }
   if (game.on){ checkAnswer(item); return; }
   showCard(item);
   say(describe(item).speak);
 }
-
 function showCard(item, found){
   current = item;
   const info = describe(item);
-  gCountries.selectAll('.sel').classed('sel', false);
-  gStates.selectAll('.sel').classed('sel', false);
-  if (item.type === 'country') gCountries.selectAll('path').filter(d => d === item.d).classed('sel', true).raise();
-  if (item.type === 'state') gStates.selectAll('path').filter(d => d === item.d).classed('sel', true).raise();
+  active.highlight && active.highlight(item);
   const card = $('#card');
   card.hidden = false; card.style.pointerEvents = 'none'; clearTimeout(card._t); card._t = setTimeout(() => card.style.pointerEvents = '', 450);  // let a double-click reach the map
   card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
   $('#cFound').hidden = !found; if (found) $('#cFound').textContent = found;
   const fl = $('#cFlag'); info.flag.startsWith('<svg') ? fl.innerHTML = info.flag : fl.textContent = info.flag;
-  const kind = $('#cKind'); kind.textContent = info.kind; fl.style.setProperty('--flagbg', info.kindbg || '#eef4f8');
+  fl.style.setProperty('--flagbg', info.bg || '#eef4f8');
+  $('#cKind').textContent = info.kind;
   $('#cName').textContent = info.name;
   $('#cRows').innerHTML = '';
-  info.rows.forEach(([k, v]) => { const dt = document.createElement('dt'); dt.textContent = k; const dd = document.createElement('dd'); dd.textContent = v; $('#cRows').append(dt, dd); });
+  info.rows.forEach(([k, val]) => { const dt = document.createElement('dt'); dt.textContent = k; const dd = document.createElement('dd'); dd.textContent = val; $('#cRows').append(dt, dd); });
   $('#cRows').hidden = !info.rows.length;
   $('#cFact span').textContent = info.fact;
 }
-$('#cClose').onclick = () => { $('#card').hidden = true; current = null; gCountries.selectAll('.sel').classed('sel', false); gStates.selectAll('.sel').classed('sel', false); };
-$('#cSay').onclick = () => { if (!current) return; const i = describe(current); const was = layers.sound; layers.sound = true; say(`${i.name}. ${i.fact}`); layers.sound = was; };
-$('#cZoom').onclick = () => { if (!current) return; pushView(); const i = describe(current); i.bounds ? zoomToBounds(i.bounds) : zoomToPoint(i.point, i.z); };
+function closeCard(){ $('#card').hidden = true; current = null; active && active.highlight && active.highlight(null); }
+$('#cClose').onclick = closeCard;
+$('#cSay').onclick = () => { if (!current) return; const i = describe(current); const was = settings.sound; settings.sound = true; say(`${i.speak}. ${i.fact}`); settings.sound = was; };
+$('#cZoom').onclick = () => { if (!current) return; pushView(active); focusItem(active, current); };
 
-/* ---------------- LAYER TOGGLES ---------------- */
-['oceans','continents','countries','states','cities','sound'].forEach(k => {
-  const b = $('#l-' + k);
-  b.onclick = () => {
-    layers[k] = !layers[k]; b.setAttribute('aria-pressed', layers[k]);
-    if (k === 'states') gStates.attr('display', layers.states ? null : 'none');
-    if (k === 'continents') recolor();
-    if (k === 'sound' && !layers.sound) try { speechSynthesis.cancel(); } catch(e){}
-    updateLabels();
-  };
-});
+/* ---------------- LAYER CHIPS ---------------- */
+function renderChips(){
+  const box = $('.layers'); box.innerHTML = '';
+  [...active.layerDefs, ['sound','Talking','#ea9ab1','#fce6ed']].forEach(([k, label, dot, bg]) => {
+    const b = document.createElement('button');
+    b.className = 'chip'; b.dataset.k = k; b.style.setProperty('--dot', dot); b.style.setProperty('--chipbg', bg);
+    b.innerHTML = '<i></i>'; b.append(label);
+    b.onclick = () => {
+      if (k === 'sound'){ settings.sound = !settings.sound; if (!settings.sound) try { speechSynthesis.cancel(); } catch(e){} }
+      else { active.layers[k] = !active.layers[k]; active.onLayer && active.onLayer(k); }
+      refreshChips(); updateLabels(active);
+    };
+    box.append(b);
+  });
+  refreshChips();
+}
+function refreshChips(){
+  document.querySelectorAll('.layers .chip').forEach(b => b.setAttribute('aria-pressed', b.dataset.k === 'sound' ? settings.sound : !!active.layers[b.dataset.k]));
+}
+
+/* ---------------- TABS ---------------- */
+function setView(id){
+  const v = views[id]; if (!v) return;
+  if (game.on) stopGame();
+  closeCard();
+  Object.values(views).forEach(x => x.svg.attr('hidden', x === v ? null : ''));
+  active = v;
+  document.body.dataset.view = id;
+  document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.view === id));
+  $('#zhome').setAttribute('aria-label', id === 'world' ? 'Show whole world' : id === 'usa' ? 'Show whole country' : 'Show whole solar system');
+  renderChips();
+  if (v.dirty) resize(v, true); else measure(v);
+  updateBack();
+  v.onShow && v.onShow();
+  try { history.replaceState(null, '', '#' + id); } catch(e){}
+}
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => setView(b.dataset.view));
 
 /* ---------------- FIND IT GAME ---------------- */
-const game = {on:false, mode:'easy', target:null, stars:0, misses:0};
+const game = {on:false, mode:null, target:null, stars:0, misses:0};
 try { game.stars = +localStorage.getItem('peekaworld-stars') || 0; } catch(e){}
-function pool(){
-  if (game.mode === 'states') return states.filter(d => d.name !== 'District of Columbia').map(d => ({type:'state', d}));
-  const real = countries.filter(d => d.cap && d.c !== 'AN');
-  if (game.mode === 'hard') return real.map(d => ({type:'country', d}));
-  const big = real.filter(d => d.rank < 55).map(d => ({type:'country', d}));
-  const oc = Object.entries(OCEANS).filter(([,o]) => o.big).map(([key,o]) => ({type:'ocean', key, o}));
-  return big.concat(oc, oc);
-}
-function nameOf(item){ return item.type === 'ocean' ? item.o.name : item.d.name; }
-function sameThing(a, b){
-  if (a.type !== b.type) return false;
-  return (a.type === 'ocean' || a.type === 'continent') ? a.key === b.key : a.d === b.d;
-}
-function nextTarget(){
-  const p = pool(); let t;
-  do { t = p[Math.floor(Math.random() * p.length)]; } while (game.target && p.length > 1 && sameThing(t, game.target));
-  game.target = t; game.misses = 0;
-  const flag = t.type === 'country' ? flagOf(t.d.a2) : t.type === 'ocean' ? '' : '🇺🇸';
-  $('#ask').innerHTML = '';
-  const f = document.createElement('span'); f.className = 'gflag'; f.textContent = flag;
-  const b = document.createElement('b'); b.textContent = nameOf(t);
-  const the = t.type === 'ocean' ? 'the ' : '';
-  $('#ask').append(f, 'Find ' + the, b, '!');
-  say(`Can you find ${the}${nameOf(t)}?`);
-}
 function setStars(n){ game.stars = n; $('#gStars').textContent = n; try { localStorage.setItem('peekaworld-stars', n); } catch(e){} }
-function startGame(){
-  game.on = true; $('#game').hidden = false; $('#cClose').onclick(); placeGame(); setStars(game.stars);
-  if (game.mode === 'states'){ ensureStates(); zoomToBounds([projection([-125,50]), projection([-66,24])], 5); }
-  else svg.transition().duration(600).call(zoom.transform, homeTransform());
-  game.target = null; nextTarget();
+function renderModes(){
+  const box = $('.modes'), cfg = active.game; box.innerHTML = '';
+  cfg.modes.forEach(m => {
+    const b = document.createElement('button'); b.textContent = m.label; b.setAttribute('aria-pressed', m.id === game.mode);
+    b.onclick = () => { game.mode = m.id; startGame(); };
+    box.append(b);
+  });
+  box.hidden = cfg.modes.length < 2;
 }
 function placeGame(){ $('#game').style.top = ($('.top').getBoundingClientRect().bottom + 12) + 'px'; }
-addEventListener('resize', () => game.on && placeGame());
-function ensureStates(){ if (!layers.states){ layers.states = true; $('#l-states').setAttribute('aria-pressed', true); gStates.attr('display', null); updateLabels(); } }
+function startGame(){
+  const cfg = active.game;
+  if (!cfg.modes.some(m => m.id === game.mode)) game.mode = cfg.modes[0].id;
+  game.on = true; closeCard(); renderModes(); $('#game').hidden = false; placeGame(); setStars(game.stars);
+  if (active.T.k / active.k0 > 1.05) active.svg.transition().duration(600).call(active.zoom.transform, homeT(active));
+  game.target = null; nextTarget();
+}
+function stopGame(){ game.on = false; $('#game').hidden = true; $('#toast').hidden = true; }
+function nextTarget(){
+  const p = active.game.pool(game.mode); let t;
+  do { t = p[Math.floor(Math.random() * p.length)]; } while (game.target && p.length > 1 && sameThing(t, game.target));
+  game.target = t; game.misses = 0;
+  const a = active.game.ask(t, game.mode), ask = $('#ask');
+  ask.innerHTML = '';
+  if (a.flag){ const f = document.createElement('span'); f.className = 'gflag'; a.flag.startsWith('<svg') ? f.innerHTML = a.flag : f.textContent = a.flag; ask.append(f); }
+  const b = document.createElement('b'); b.textContent = a.name;
+  ask.append(a.pre, b, a.post);
+  say(a.speak);
+}
 function checkAnswer(item){
-  const t = game.target;
-  if (sameThing(item, t)){
+  const t = game.target, cfg = active.game;
+  const ok = cfg.match ? cfg.match(item, t, game.mode) : sameThing(item, t);
+  if (ok){
     setStars(game.stars + 1);
     confetti(game.stars % 5 === 0 ? 260 : 120);
-    const cheer = game.stars % 5 === 0 ? `Super explorer! ${game.stars} stars!` : ['You found it!','Great job!','Nice one!','Awesome!','Yes, that\'s it!'][Math.floor(Math.random()*5)];
-    say(`${cheer} ${nameOf(t)}!`);
-    showCard(item, cheer);
-    setTimeout(nextTarget, 1400);
+    const cheer = game.stars % 5 === 0 ? `Super explorer! ${game.stars} stars!` : ['You found it!','Great job!','Nice one!','Awesome!',"Yes, that's it!"][Math.floor(Math.random()*5)];
+    say(`${cheer} ${describe(t).speak}!`);
+    showCard(t, cheer);
+    setTimeout(() => { if (game.on) nextTarget(); }, 1600);
   } else {
     game.misses++;
     const g = $('#game'); g.classList.remove('shake'); void g.offsetWidth; g.classList.add('shake');
-    const n = nameOf(item);
-    toast(`That's ${n}. Try again!`);
-    say(`That's ${n}. Try again!`);
+    const msg = (cfg.wrong && cfg.wrong(item, t, game.mode)) || `That's ${describe(item).speak}. Try again!`;
+    toast(msg.charAt(0).toUpperCase() + msg.slice(1)); say(msg);
     if (game.misses === 3) hint();
   }
 }
-function hint(){
-  const t = game.target;
-  if (t.type === 'ocean'){
-    const p = T.apply(projection(t.o.pos[0]));
-    for (let i = 0; i < 3; i++) gScreenFx.append('circle').attr('class','hint-ring').attr('cx',p[0]).attr('cy',p[1]).attr('r',10).attr('opacity',1)
-      .transition().delay(i * 350).duration(900).attr('r',80).attr('opacity',0).remove();
-  } else {
-    const g = t.type === 'country' ? gCountries : gStates;
-    const sel = g.selectAll('path').filter(d => d === t.d);
-    sel.raise().classed('hint', false); void document.body.offsetWidth; sel.classed('hint', true);
-    setTimeout(() => sel.classed('hint', false), 3200);
-    const b = path.bounds(t.d.lp), c = [(b[0][0]+b[1][0])/2, (b[0][1]+b[1][1])/2];
-    const [sx, sy] = T.apply(c);
-    if (sx < 0 || sx > W || sy < 0 || sy > H || t.d.span * T.k < 8) zoomToPoint(c, Math.max(T.k / k0, Math.min(6, 40 / (t.d.span || 1))));
-  }
-  say('Look for the flashing spot!');
-}
+function hint(){ active.flash(game.target); say('Look for the flashing spot!'); }
 $('#playBtn').onclick = startGame;
-$('#gStop').onclick = () => { game.on = false; $('#game').hidden = true; $('#toast').hidden = true; };
-$('#gSkip').onclick = () => { toast(`It was ${nameOf(game.target)}!`); hint(); setTimeout(nextTarget, 1800); };
+$('#gStop').onclick = stopGame;
+$('#gSkip').onclick = () => { toast(`It was ${describe(game.target).speak}!`); hint(); setTimeout(() => { if (game.on) nextTarget(); }, 2000); };
 $('#gHint').onclick = hint;
-document.querySelectorAll('.modes button').forEach(b => b.onclick = () => {
-  document.querySelectorAll('.modes button').forEach(x => x.setAttribute('aria-pressed', x === b));
-  game.mode = b.dataset.mode; startGame();
-});
 
 /* ---------------- CONFETTI ---------------- */
 const cv = $('#confetti'), cx = cv.getContext('2d');
@@ -1123,5 +1625,17 @@ function tick(){
   if (!parts.length) cx.clearRect(0, 0, innerWidth, innerHeight);
 }
 
+/* ---------------- START ---------------- */
+async function load(){
+  const [world, us] = await Promise.all([
+    fetch('data/countries.json').then(r => r.json()),
+    fetch('data/states.json').then(r => r.json())
+  ]);
+  buildWorld(world); buildUSA(us); buildSpace();
+  $('#loading').remove();
+  const start = (location.hash || '').slice(1);
+  setView(views[start] ? start : 'world');
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => measure(active));
+}
 load().catch(err => { $('#loading').textContent = 'The map could not load. Check the internet connection and refresh.'; console.error(err); });
 </script>
