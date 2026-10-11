@@ -23,7 +23,7 @@ its own fun fact waiting to be found.
 |---|---|
 | 🌊 **Oceans & seas** | All five oceans, plus the Mediterranean, the Caribbean, the Caspian (secretly a lake!) and more. Tap the water itself. |
 | 🗺️ **Continents** | Seven pastel continents. Turn colors off and every country gets its own rainbow shade. |
-| 🏳️ **Countries** | Flag, continent, capital city and a "Did you know?" fact for each country. |
+| 🏳️ **Countries & flags** | Every country wears its flag right next to its name on the map. Tap one for the big flag, continent, capital city and a "Did you know?" fact. Flip the **Flags** switch to hide them. |
 | ⭐ **Cities** | About 100 cities. Capitals are pink stars, and more cities pop up the closer you zoom. |
 
 ### 🇺🇸 USA
@@ -116,6 +116,7 @@ Then open <http://localhost:5180>.
 index.html          the whole app: styles, map drawing, facts, game
 data/countries.json world country shapes (TopoJSON)
 data/states.json    US state shapes (TopoJSON), used by the USA map
+flags/              a flag picture for every country
 docs/               screenshots for this README
 ```
 
@@ -123,6 +124,7 @@ docs/               screenshots for this README
 - The Space map is drawn by hand in SVG. Comets follow real elliptical orbits, worked out with Kepler's equation.
 - **[TopoJSON](https://github.com/topojson/topojson-client)** turns the compact map files into shapes.
 - Map shapes come from **[world-atlas](https://github.com/topojson/world-atlas)** and **[us-atlas](https://github.com/topojson/us-atlas)**, which are built from [Natural Earth](https://www.naturalearthdata.com) and the US Census Bureau.
+- Flags come from **[flag-icons](https://github.com/lipis/flag-icons)** (MIT license).
 - Fonts are **Fraunces** and **Figtree** from Google Fonts.
 - The voice is the browser's built-in speech, so there's nothing to sign up for.
 

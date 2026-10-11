@@ -83,6 +83,10 @@ button:focus-visible{outline:2px solid var(--rose-ink);outline-offset:3px}
 .card-top{display:flex;gap:16px;align-items:center;padding-right:40px}
 .flag{font-size:46px;line-height:1;flex:none;width:72px;height:72px;display:grid;place-items:center;border-radius:20px;background:var(--flagbg,#eef4f8)}
 .flag svg{width:38px;height:38px}
+.flag img{width:52px;height:39px;object-fit:cover;border-radius:5px;box-shadow:0 0 0 1px rgba(54,64,90,.12),0 3px 8px -2px rgba(54,64,90,.25)}
+.ask .gflag img{width:40px;height:30px;object-fit:cover;border-radius:4px;vertical-align:-5px;box-shadow:0 0 0 1px rgba(54,64,90,.12),0 2px 6px -2px rgba(54,64,90,.25)}
+.flag-edge{fill:none;stroke:rgba(54,64,90,.22);stroke-width:1}
+.lbl image{filter:drop-shadow(0 1px 1.5px rgba(54,64,90,.25))}
 .kind{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .card h2{margin:3px 0 0;font-family:var(--display);font-variation-settings:"SOFT" 100,"opsz" 72;font-weight:600;font-size:32px;line-height:1.05;letter-spacing:-.015em;text-wrap:balance}
 .rows{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:16px 0 0;font-size:16px}
@@ -516,6 +520,7 @@ const NAME_FIX = {
   'Indian Ocean Ter.':'Australian Indian Ocean Territories'
 };
 const fixName = n => NAME_FIX[n] || n.replace(/\bIs\.$/,'Islands');
+const flagImg = a2 => a2 && a2.length === 2 ? `<img src="flags/${a2.toLowerCase()}.svg" alt="">` : '';
 const flagOf = a2 => a2 && a2.length === 2 ? String.fromCodePoint(...[...a2].map(c => 127397 + c.charCodeAt(0))) : '';
 
 // state name -> capital | nickname | fact
@@ -891,6 +896,10 @@ function focusItem(v, it){
 function addLabel(v, o){
   const g = v.gLabels.append('g').attr('class','lbl ' + o.cls + (o.item ? ' tap' : ''));
   if (o.marker) o.marker(g);
+  if (o.flag){
+    o.fimg = g.append('image').attr('href', `flags/${o.flag.toLowerCase()}.svg`).attr('width', 20).attr('height', 15).attr('y', -7.5).attr('preserveAspectRatio','xMidYMid slice');
+    o.fbox = g.append('rect').attr('class','flag-edge').attr('width', 20).attr('height', 15).attr('y', -7.5).attr('rx', 2);
+  }
   const t = g.append('text').text(o.text).attr('font-size', o.size).attr('dy','.35em');
   if (o.dx) t.attr('x', o.dx).attr('text-anchor','start'); else t.attr('text-anchor','middle');
   if (o.item) g.node().__item = o.item;
@@ -902,6 +911,7 @@ function measure(v){
   for (const o of v.labels){
     o.g.style('display', null); o.vis = undefined;
     try { const w = o.t.node().getComputedTextLength(); if (w) o.w = w; } catch(e){}
+    o.tw = o.w; o.flagShown = undefined;
   }
   updateLabels(v);
 }
@@ -911,6 +921,15 @@ function updateLabels(v){
   const z = v.T.k / v.k0, placed = [];
   const hit = b => placed.some(p => b[0] < p[2] && b[2] > p[0] && b[1] < p[3] && b[3] > p[1]);
   for (const o of v.labels){
+    if (o.fimg){
+      const on = !!v.layers.flags;
+      if (on !== o.flagShown){
+        o.flagShown = on; o.w = (o.tw || o.w) + (on ? 24 : 0);
+        o.t.attr('x', on ? 12 : 0);
+        o.fimg.attr('x', -o.w / 2).style('display', on ? null : 'none');
+        o.fbox.attr('x', -o.w / 2).style('display', on ? null : 'none');
+      }
+    }
     let show = (!o.layer || v.layers[o.layer]) && z >= (o.minZ || 0) && z < (o.maxZ || 1e9);
     if (show && o.span && o.w > o.span * v.T.k * 1.25 && !(o.forceZ && z >= o.forceZ)) show = false;
     let x, y;
@@ -960,7 +979,7 @@ function buildWorld(world){
   const v = makeView('world', {label:'Interactive world map', maxZ:60});
   const proj = d3.geoNaturalEarth1().fitWidth(1000, sphere), path = d3.geoPath(proj);
   Object.assign(v, {proj, path, BW:1000, BH:path.bounds(sphere)[1][1]});
-  v.layers = {oceans:true, continents:true, countries:true, cities:true};
+  v.layers = {oceans:true, continents:true, countries:true, flags:true, cities:true};
 
   const wave = v.defs.append('pattern').attr('id','waves').attr('width',24).attr('height',12).attr('patternUnits','userSpaceOnUse');
   wave.append('path').attr('d','M0 8 q3 -3 6 0 t6 0').attr('fill','none').attr('stroke','#fff').attr('stroke-opacity',.55).attr('stroke-width',.6);
@@ -992,7 +1011,7 @@ function buildWorld(world){
     .each(function(d){ this.__item = {type:'country', d}; });
 
   v.layerDefs = [['oceans','Oceans','#8cc3e2','#e3f1f9'], ['continents','Continents','#f2c27e','#fdf0dc'],
-                 ['countries','Countries','#b9a8e6','#efeafb'], ['cities','Cities','#ebc34f','#fdf4d6']];
+                 ['countries','Countries','#b9a8e6','#efeafb'], ['flags','Flags','#e9a87c','#fdeee3'], ['cities','Cities','#ebc34f','#fdf4d6']];
   v.onLayer = k => { if (k === 'continents') gC.selectAll('path').attr('fill', fill); };
 
   for (const [key, c] of Object.entries(CONT))
@@ -1001,7 +1020,7 @@ function buildWorld(world){
     o.pos.forEach(p => addLabel(v, {cls:o.big ? 'ocean-l' : 'sea-l', layer:'oceans', text:o.name, size:o.big ? 19 : 14,
       p:proj(p), minZ:o.big ? 0 : 2.4, maxZ:o.big ? 14 : 30, item:{type:'ocean', key, o}}));
   ranked.forEach(d => addLabel(v, {cls:'country-l', layer:'countries', text:d.name, size:d.rank < 20 ? 15 : 12.5,
-    p:d.center, minZ:1.45, span:d.span, forceZ:d.rank < 60 ? 6 : 14}));
+    p:d.center, minZ:1.45, span:d.span, forceZ:d.rank < 60 ? 6 : 14, flag:d.a2}));
   CITIES.forEach(c => {
     const city = {name:c[0], pt:proj([c[1],c[2]]), tier:c[3], cap:!!c[4], where:c[5], fact:c[6], z:9};
     addLabel(v, {cls:'city', layer:'cities', text:city.name, size:12.5, dx:city.cap ? 11 : 8, p:city.pt,
@@ -1027,7 +1046,7 @@ function buildWorld(world){
       const oc = Object.entries(OCEANS).filter(([,o]) => o.big).map(([key,o]) => ({type:'ocean', key, o}));
       return real.filter(d => d.rank < 55).map(d => ({type:'country', d})).concat(oc, oc);
     },
-    ask: t => ({flag:t.type === 'country' ? flagOf(t.d.a2) : '', pre:t.type === 'ocean' ? 'Find the ' : 'Find ', name:nameOf(t), post:'!',
+    ask: t => ({flag:t.type === 'country' ? flagImg(t.d.a2) : '', pre:t.type === 'ocean' ? 'Find the ' : 'Find ', name:nameOf(t), post:'!',
                speak:`Can you find ${t.type === 'ocean' ? 'the ' : ''}${nameOf(t)}?`})
   };
   return v;
@@ -1437,7 +1456,7 @@ function describe(item){
   const w = views.world;
   if (item.type === 'country'){
     const d = item.d, cont = CONT[d.c]?.name, rows = [['Continent', cont]]; if (d.cap) rows.push(['Capital', d.cap]);
-    return {kind:'Country', bg:CONT[d.c]?.color, flag:flagOf(d.a2) || ICON.continent, name:d.name, rows,
+    return {kind:'Country', bg:CONT[d.c]?.color, flag:flagImg(d.a2) || ICON.continent, name:d.name, rows,
       fact:d.fact || (d.cap ? `Its capital city is ${d.cap}. Can you find it on the map?` : `It is part of ${cont}.`), speak:d.name, bounds:d.bounds};
   }
   if (item.type === 'ocean'){
@@ -1457,7 +1476,7 @@ function describe(item){
   }
   if (item.type === 'state'){
     const d = item.d, dc = d.name === 'District of Columbia';
-    return {kind:dc ? 'Capital of the United States' : 'US State', bg:'#e6f5e8', flag:'🇺🇸', name:dc ? 'Washington, D.C.' : d.name,
+    return {kind:dc ? 'Capital of the United States' : 'US State', bg:'#e6f5e8', flag:flagImg('US'), name:dc ? 'Washington, D.C.' : d.name,
       rows:dc ? [['Nickname', d.nick]] : [['Capital', d.cap], ['Nickname', d.nick]], fact:d.fact || `Its nickname is the ${d.nick}.`,
       speak:dc ? 'Washington, D.C.' : d.name, bounds:d.bounds};
   }
@@ -1492,7 +1511,7 @@ function showCard(item, found){
   card.hidden = false; card.style.pointerEvents = 'none'; clearTimeout(card._t); card._t = setTimeout(() => card.style.pointerEvents = '', 450);  // let a double-click reach the map
   card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
   $('#cFound').hidden = !found; if (found) $('#cFound').textContent = found;
-  const fl = $('#cFlag'); info.flag.startsWith('<svg') ? fl.innerHTML = info.flag : fl.textContent = info.flag;
+  const fl = $('#cFlag'); info.flag.startsWith('<') ? fl.innerHTML = info.flag : fl.textContent = info.flag;
   fl.style.setProperty('--flagbg', info.bg || '#eef4f8');
   $('#cKind').textContent = info.kind;
   $('#cName').textContent = info.name;
@@ -1572,7 +1591,7 @@ function nextTarget(){
   game.target = t; game.misses = 0;
   const a = active.game.ask(t, game.mode), ask = $('#ask');
   ask.innerHTML = '';
-  if (a.flag){ const f = document.createElement('span'); f.className = 'gflag'; a.flag.startsWith('<svg') ? f.innerHTML = a.flag : f.textContent = a.flag; ask.append(f); }
+  if (a.flag){ const f = document.createElement('span'); f.className = 'gflag'; a.flag.startsWith('<') ? f.innerHTML = a.flag : f.textContent = a.flag; ask.append(f); }
   const b = document.createElement('b'); b.textContent = a.name;
   ask.append(a.pre, b, a.post);
   say(a.speak);
